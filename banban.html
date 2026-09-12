@@ -1,0 +1,518 @@
+import React, { useState, useEffect } from 'react';
+
+// --- Mock Data ---
+const MOCK_POSTS = [
+  {
+    id: 1,
+    title: '대파 1단 너무 많아서 반 나누실 분!',
+    price: 1500,
+    originalPrice: 3000,
+    type: 'buy_together', // 같이사요
+    location: '광명시 철산동',
+    time: '10분 전',
+    expDate: '2026-09-20',
+    receiptVerified: true,
+    image: '🥬',
+    author: '자취10년차',
+    status: 'recruiting'
+  },
+  {
+    id: 2,
+    title: '양파 한 망 샀는데 3개 소분/나눔해요',
+    price: 1000,
+    originalPrice: 0,
+    type: 'share', // 소분/나눔
+    location: '광명시 철산동',
+    time: '1시간 전',
+    expDate: '2026-09-30',
+    receiptVerified: false,
+    image: '🧅',
+    author: '요리초보',
+    status: 'recruiting'
+  },
+  {
+    id: 3,
+    title: '코스트코 식빵 반 줄 가져가실 분',
+    price: 3500,
+    originalPrice: 7000,
+    type: 'buy_together',
+    location: '광명시 하안동',
+    time: '3시간 전',
+    expDate: '2026-09-15',
+    receiptVerified: true,
+    image: '🍞',
+    author: '빵돌이',
+    status: 'completed'
+  }
+];
+
+// --- SVG Icons ---
+const IconMapPin = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>;
+const IconSearch = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>;
+const IconBell = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>;
+const IconHome = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>;
+const IconMessage = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>;
+const IconUser = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>;
+const IconPlus = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>;
+const IconCheckCircle = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>;
+const IconCamera = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>;
+const IconStar = ({ filled, onClick }) => (
+  <svg onClick={onClick} className={`cursor-pointer ${filled ? 'text-yellow-400' : 'text-gray-300'}`} xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+  </svg>
+);
+const IconChevronLeft = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>;
+
+export default function BanBanMarketApp() {
+  const [currentScreen, setCurrentScreen] = useState('start'); // start, main, detail, write, chat, review
+  const [posts, setPosts] = useState(MOCK_POSTS);
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [activeTab, setActiveTab] = useState('buy_together');
+  const [myLocation, setMyLocation] = useState('');
+
+  // --- 1단계: 시작 화면 (Start) ---
+  const ScreenStart = () => {
+    const [isLocating, setIsLocating] = useState(false);
+
+    const handleStart = () => {
+      setIsLocating(true);
+      
+      // 실제 브라우저 GPS(Geolocation API) 호출
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            // 실제 GPS 좌표 추출
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            console.log(`실제 GPS 좌표 획득: 위도 ${lat}, 경도 ${lng}`);
+            
+            try {
+              // OpenStreetMap Nominatim API를 통한 리버스 지오코딩 (좌표 -> 주소 변환)
+              const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+              const data = await response.json();
+              
+              // 동/마을/구/시 정보 추출
+              const address = data.address;
+              const neighborhood = address.suburb || address.neighbourhood || address.village || address.town || address.city_district || address.borough || '';
+              const city = address.city || address.province || '';
+              
+              const locationName = (city || neighborhood) ? `${city} ${neighborhood}`.trim() : '현재 내 위치';
+              setMyLocation(`${locationName} (GPS 인증)`);
+            } catch (error) {
+              console.error('주소 변환 실패:', error);
+              setMyLocation('현재 내 위치(GPS 인증)');
+            }
+            
+            setIsLocating(false);
+            setCurrentScreen('main');
+          },
+          (error) => {
+            console.warn('GPS 권한이 거부되었거나 오류가 발생했습니다.', error);
+            // 권한 거부 또는 실패 시 임시 위치로 넘어갑니다.
+            setMyLocation('광명시 철산동 (임시)');
+            setIsLocating(false);
+            setCurrentScreen('main');
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+      } else {
+        // GPS를 지원하지 않는 환경일 경우
+        alert('이 브라우저에서는 GPS를 지원하지 않습니다.');
+        setMyLocation('광명시 철산동');
+        setIsLocating(false);
+        setCurrentScreen('main');
+      }
+    };
+
+    return (
+      <div className="flex flex-col items-center justify-center h-full bg-green-50 px-6 text-center">
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mb-6 shadow-lg">
+            <span className="text-4xl">🛒</span>
+          </div>
+          <h1 className="text-4xl font-extrabold text-green-700 mb-2 tracking-tight">반반마켓</h1>
+          <p className="text-gray-600 mb-12 text-sm">1인 가구를 위한 완벽한 식재료 소분·나눔</p>
+          
+          <button 
+            onClick={handleStart}
+            disabled={isLocating}
+            className="w-full max-w-xs bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-md transition-all flex justify-center items-center gap-2 disabled:opacity-70"
+          >
+            {isLocating ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                동네 위치 확인 중...
+              </>
+            ) : (
+              'GPS 동네 인증하고 시작하기'
+            )}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // --- 2단계: 메인 실행 화면 (Main) ---
+  const ScreenMain = () => {
+    const filteredPosts = posts.filter(post => post.type === activeTab);
+
+    return (
+      <div className="flex flex-col h-full bg-gray-50 pb-16">
+        {/* Header */}
+        <header className="bg-white px-4 py-3 flex items-center justify-between shadow-sm sticky top-0 z-10">
+          <div className="flex items-center gap-1 font-bold text-lg cursor-pointer">
+            <IconMapPin />
+            {myLocation}
+          </div>
+          <div className="flex items-center gap-4 text-gray-600">
+            <IconSearch />
+            <IconBell />
+          </div>
+        </header>
+
+        {/* Tabs */}
+        <div className="flex bg-white border-b border-gray-200">
+          <button 
+            className={`flex-1 py-3 text-center font-medium ${activeTab === 'buy_together' ? 'border-b-2 border-green-500 text-green-600' : 'text-gray-500'}`}
+            onClick={() => setActiveTab('buy_together')}
+          >
+            같이 사요 (공구)
+          </button>
+          <button 
+            className={`flex-1 py-3 text-center font-medium ${activeTab === 'share' ? 'border-b-2 border-green-500 text-green-600' : 'text-gray-500'}`}
+            onClick={() => setActiveTab('share')}
+          >
+            나눔/소분
+          </button>
+        </div>
+
+        {/* Feed List */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {filteredPosts.map(post => (
+            <div 
+              key={post.id} 
+              className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4 cursor-pointer active:scale-[0.98] transition-transform"
+              onClick={() => { setSelectedPost(post); setCurrentScreen('detail'); }}
+            >
+              <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center text-4xl flex-shrink-0">
+                {post.image}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-gray-900 truncate">{post.title}</h3>
+                <p className="text-xs text-gray-500 mt-1">{post.location} · {post.time}</p>
+                <div className="flex items-center gap-2 mt-2 font-bold text-green-700">
+                  {post.price.toLocaleString()}원
+                  {post.originalPrice > 0 && <span className="text-xs text-gray-400 line-through font-normal">{post.originalPrice.toLocaleString()}원</span>}
+                </div>
+                
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {post.receiptVerified && (
+                    <span className="inline-flex items-center gap-1 text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100 font-medium">
+                      <IconCheckCircle /> 영수증 인증
+                    </span>
+                  )}
+                  {post.expDate && (
+                    <span className="inline-flex items-center gap-1 text-[10px] bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded border border-orange-100 font-medium">
+                      유통기한: {post.expDate}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+          {filteredPosts.length === 0 && (
+            <div className="text-center text-gray-400 py-10">해당 카테고리에 등록된 글이 없습니다.</div>
+          )}
+        </div>
+
+        {/* Floating Action Button */}
+        <button 
+          onClick={() => setCurrentScreen('write')}
+          className="absolute bottom-20 right-4 w-14 h-14 bg-green-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors"
+        >
+          <IconPlus />
+        </button>
+
+        {/* Bottom Navigation */}
+        <nav className="absolute bottom-0 w-full bg-white border-t border-gray-200 flex justify-around py-3 pb-safe z-10">
+          <button className="flex flex-col items-center text-green-600"><IconHome /><span className="text-[10px] mt-1 font-medium">홈</span></button>
+          <button className="flex flex-col items-center text-gray-400"><IconMessage /><span className="text-[10px] mt-1 font-medium">채팅</span></button>
+          <button className="flex flex-col items-center text-gray-400"><IconUser /><span className="text-[10px] mt-1 font-medium">나의 당근</span></button>
+        </nav>
+      </div>
+    );
+  };
+
+  // --- 글쓰기 (식재료 특화 폼) ---
+  const ScreenWrite = () => {
+    return (
+      <div className="flex flex-col h-full bg-white">
+        <header className="px-4 py-3 border-b flex items-center justify-between">
+          <button onClick={() => setCurrentScreen('main')} className="p-1"><IconChevronLeft /></button>
+          <h1 className="font-bold">모집 글쓰기</h1>
+          <button onClick={() => setCurrentScreen('main')} className="text-green-600 font-bold">완료</button>
+        </header>
+        <div className="flex-1 overflow-y-auto p-5 space-y-6">
+          <div>
+            <div className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center text-gray-400 cursor-pointer bg-gray-50">
+              <IconCamera />
+              <span className="text-xs mt-1">0/3</span>
+            </div>
+          </div>
+          <input type="text" placeholder="글 제목 (예: 대파 한 단 반 나누실 분)" className="w-full text-lg border-b border-gray-200 py-3 outline-none focus:border-green-500 placeholder-gray-300"/>
+          
+          <div className="flex gap-4">
+             <div className="flex-1">
+               <label className="text-xs text-gray-500 font-bold">총 구매 가격 (원)</label>
+               <input type="number" placeholder="예: 4000" className="w-full border-b border-gray-200 py-2 outline-none focus:border-green-500"/>
+             </div>
+             <div className="flex-1">
+               <label className="text-xs text-green-600 font-bold">소분/요청 가격 (원)</label>
+               <input type="number" placeholder="예: 2000" className="w-full border-b border-gray-200 py-2 outline-none focus:border-green-500"/>
+             </div>
+          </div>
+
+          <div className="bg-green-50 p-4 rounded-xl border border-green-100 space-y-4">
+            <h3 className="font-bold text-sm text-green-800 flex items-center gap-1">
+              <IconCheckCircle /> 식재료 안심 규격화 정보
+            </h3>
+            
+            <div>
+              <label className="text-xs text-gray-600 font-medium block mb-1">영수증 인증 (선택)</label>
+              <button className="w-full py-2 bg-white border border-gray-300 text-gray-600 rounded-lg text-sm flex items-center justify-center gap-2">
+                <IconCamera /> 영수증 사진 업로드하여 신뢰도 높이기
+              </button>
+            </div>
+
+            <div>
+              <label className="text-xs text-gray-600 font-medium block mb-1">유통기한/소비기한 (필수)</label>
+              <input type="date" className="w-full p-2 border border-gray-300 rounded-lg text-sm bg-white" />
+            </div>
+            
+            <div>
+              <label className="text-xs text-gray-600 font-medium block mb-1">나누는 양 (규격)</label>
+              <select className="w-full p-2 border border-gray-300 rounded-lg text-sm bg-white">
+                <option>정확히 절반(1/2)</option>
+                <option>1/3 정도</option>
+                <option>소량 조금만</option>
+                <option>직접 합의</option>
+              </select>
+            </div>
+          </div>
+
+          <textarea placeholder="자세한 상품 설명 및 만날 장소를 적어주세요." className="w-full h-32 outline-none resize-none placeholder-gray-300 mt-4"></textarea>
+        </div>
+      </div>
+    );
+  };
+
+  // --- 상세 화면 (Detail) ---
+  const ScreenDetail = () => {
+    if (!selectedPost) return null;
+    return (
+      <div className="flex flex-col h-full bg-white relative">
+        <header className="absolute top-0 w-full p-4 flex justify-between z-10 bg-gradient-to-b from-black/20 to-transparent">
+          <button onClick={() => setCurrentScreen('main')} className="text-white p-1 rounded-full bg-black/20 backdrop-blur-sm"><IconChevronLeft /></button>
+        </header>
+        
+        <div className="flex-1 overflow-y-auto pb-20">
+          <div className="h-64 bg-gray-100 flex items-center justify-center text-8xl">
+            {selectedPost.image}
+          </div>
+          
+          <div className="p-5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-700 font-bold">
+                {selectedPost.author.substring(0,1)}
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-gray-900">{selectedPost.author}</p>
+                <p className="text-xs text-gray-500">{selectedPost.location}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs font-bold text-green-600">신뢰온도</p>
+                <p className="font-bold text-green-500">42.5°C</p>
+              </div>
+            </div>
+            <hr className="my-4 border-gray-100" />
+            
+            <h1 className="text-xl font-bold mb-2">{selectedPost.title}</h1>
+            <p className="text-xs text-gray-400 mb-4">{selectedPost.time}</p>
+            
+            <div className="bg-gray-50 p-4 rounded-xl space-y-2 mb-6">
+              {selectedPost.receiptVerified && (
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <IconCheckCircle /> <span className="font-semibold text-blue-600">영수증 인증 완료</span> (원본 구매가: {selectedPost.originalPrice}원)
+                </div>
+              )}
+              {selectedPost.expDate && (
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <span className="w-4 h-4 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-[10px] font-bold">!</span>
+                  유통기한: <span className="font-semibold">{selectedPost.expDate} 까지</span>
+                </div>
+              )}
+            </div>
+            
+            <p className="text-gray-700 leading-relaxed">
+              너무 많이 사서 다 못 먹을 것 같아 나눕니다.<br/>
+              직접 오셔서 가져가실 분 구해요!<br/>
+              신선할 때 빨리 나눠요~
+            </p>
+          </div>
+        </div>
+
+        <div className="absolute bottom-0 w-full bg-white border-t p-3 px-5 flex items-center justify-between shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+          <div className="flex items-center gap-3">
+             <div className="flex flex-col">
+                <span className="font-bold text-lg">{selectedPost.price.toLocaleString()}원</span>
+                <span className="text-xs text-green-600 font-medium">가격 제안 불가</span>
+             </div>
+          </div>
+          <button 
+            onClick={() => setCurrentScreen('chat')}
+            className="bg-green-500 text-white font-bold py-3 px-8 rounded-xl shadow-sm hover:bg-green-600 transition-colors"
+          >
+            채팅하기
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // --- 채팅 화면 (Chat) ---
+  const ScreenChat = () => {
+    return (
+      <div className="flex flex-col h-full bg-[#F4F4F4]">
+        <header className="bg-white px-4 py-3 flex items-center justify-between shadow-sm z-10">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setCurrentScreen('detail')} className="p-1 -ml-2"><IconChevronLeft /></button>
+            <h1 className="font-bold">{selectedPost?.author}</h1>
+          </div>
+          <button 
+            onClick={() => setCurrentScreen('review')}
+            className="bg-green-500 text-white text-sm font-bold px-3 py-1.5 rounded-lg shadow-sm"
+          >
+            거래완료
+          </button>
+        </header>
+        
+        {/* Chat Item Preview */}
+        <div className="bg-white p-3 border-b border-gray-200 flex items-center gap-3">
+          <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-xl">{selectedPost?.image}</div>
+          <div className="flex-1">
+             <p className="text-sm font-bold truncate">{selectedPost?.title}</p>
+             <p className="text-sm font-bold text-green-600">{selectedPost?.price.toLocaleString()}원</p>
+          </div>
+        </div>
+
+        <div className="flex-1 p-4 overflow-y-auto space-y-4">
+           <div className="text-center text-xs text-gray-400 my-4">2026년 9월 12일</div>
+           
+           <div className="flex flex-col gap-1 items-end">
+             <div className="bg-green-500 text-white p-3 rounded-2xl rounded-tr-sm max-w-[80%] shadow-sm">
+               안녕하세요! 이거 아직 반 나눌 수 있나요?
+             </div>
+             <span className="text-[10px] text-gray-400">오후 2:30</span>
+           </div>
+
+           <div className="flex gap-2">
+             <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-700 font-bold text-xs shrink-0">
+                {selectedPost?.author.substring(0,1)}
+              </div>
+             <div className="flex flex-col gap-1 items-start">
+               <div className="bg-white text-gray-800 p-3 rounded-2xl rounded-tl-sm max-w-[80%] shadow-sm border border-gray-100">
+                 네 가능해요! 철산역 3번출구 앞에서 뵐까요?
+               </div>
+               <span className="text-[10px] text-gray-400">오후 2:32</span>
+             </div>
+           </div>
+        </div>
+
+        <div className="bg-white p-3 border-t flex items-center gap-2">
+          <button className="text-gray-400 p-2"><IconPlus /></button>
+          <input type="text" placeholder="메시지를 입력하세요" className="flex-1 bg-gray-100 rounded-full px-4 py-2 text-sm outline-none" />
+        </div>
+      </div>
+    );
+  };
+
+  // --- 3단계: 결과/엔딩 (Result & Review) ---
+  const ScreenReview = () => {
+    const [rating, setRating] = useState(0);
+    const [selectedTags, setSelectedTags] = useState([]);
+    const tags = ['친절하고 매너가 좋아요', '시간 약속을 잘 지켜요', '식재료 상태가 좋아요', '응답이 빨라요'];
+
+    const toggleTag = (tag) => {
+      if (selectedTags.includes(tag)) setSelectedTags(selectedTags.filter(t => t !== tag));
+      else setSelectedTags([...selectedTags, tag]);
+    };
+
+    return (
+      <div className="flex flex-col h-full bg-white px-6 py-10 justify-between">
+        <div>
+          <div className="text-center mb-10">
+            <div className="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <IconCheckCircle />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">따뜻한 거래가 완료되었습니다!</h1>
+            <p className="text-gray-500 text-sm">환경과 지갑을 지키는 반반마켓 ♻️</p>
+          </div>
+
+          <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 text-center mb-8">
+            <h2 className="font-bold text-gray-800 mb-4">{selectedPost?.author} 님과의 거래는 어떠셨나요?</h2>
+            <div className="flex justify-center gap-2 mb-6">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <IconStar key={star} filled={rating >= star} onClick={() => setRating(star)} />
+              ))}
+            </div>
+            
+            <div className="space-y-2 text-left">
+              <p className="text-xs text-gray-400 font-bold mb-3 pl-1">어떤 점이 좋았나요? (선택)</p>
+              {tags.map(tag => (
+                <button 
+                  key={tag}
+                  onClick={() => toggleTag(tag)}
+                  className={`w-full p-3 rounded-xl border text-sm font-medium transition-colors ${selectedTags.includes(tag) ? 'bg-green-50 border-green-500 text-green-700' : 'bg-white border-gray-200 text-gray-600'}`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <button 
+          onClick={() => {
+            // Remove completed item and return to main
+            setPosts(posts.filter(p => p.id !== selectedPost.id));
+            setSelectedPost(null);
+            setCurrentScreen('main');
+          }}
+          className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl shadow-md transition-all mt-4"
+        >
+          평가 보내고 홈으로 가기
+        </button>
+      </div>
+    );
+  };
+
+  return (
+    <div className="w-full h-screen bg-gray-200 flex items-center justify-center font-sans sm:p-4">
+      {/* Mobile Frame Container */}
+      <div className="w-full h-full sm:max-w-md sm:h-[850px] sm:max-h-[95vh] bg-white sm:rounded-[2.5rem] shadow-2xl relative overflow-hidden flex flex-col sm:border-8 border-gray-800">
+        {/* Render Current Screen */}
+        {currentScreen === 'start' && <ScreenStart />}
+        {currentScreen === 'main' && <ScreenMain />}
+        {currentScreen === 'write' && <ScreenWrite />}
+        {currentScreen === 'detail' && <ScreenDetail />}
+        {currentScreen === 'chat' && <ScreenChat />}
+        {currentScreen === 'review' && <ScreenReview />}
+        
+        {/* Simulated iOS Home Indicator */}
+        <div className="absolute bottom-1 w-full flex justify-center hidden sm:flex z-50 pointer-events-none">
+          <div className="w-1/3 h-1 bg-gray-300 rounded-full"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
