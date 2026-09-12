@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>주요기능 설명</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #f5f7fb;
+      color: #1f2937;
+      font-family: "맑은 고딕", sans-serif;
+      line-height: 1.7;
+      overflow-wrap: anywhere;
+    }
+
+    main {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .back {
+      color: #2457d6;
+      text-decoration: none;
+    }
+
+    header {
+      margin: 28px 0;
+    }
+
+    .student {
+      margin-bottom: 4px;
+      color: #526078;
+      font-weight: bold;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(26px, 5vw, 36px);
+    }
+
+    h2 {
+      margin-top: 0;
+      font-size: 20px;
+    }
+
+    .card {
+      margin-bottom: 16px;
+      padding: 24px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+    }
+
+    .card p {
+      margin-bottom: 0;
+    }
+
+    ol {
+      margin-bottom: 0;
+      padding-left: 24px;
+    }
+
+    li + li {
+      margin-top: 8px;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .button {
+      display: inline-block;
+      padding: 12px 20px;
+      background: #2457d6;
+      color: white;
+      border-radius: 10px;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    .button:hover {
+      background: #183e9e;
+    }
+
+    .button.secondary {
+      background: white;
+      color: #2457d6;
+      border: 1px solid #2457d6;
+    }
+
+    a:focus-visible {
+      outline: 3px solid #a34500;
+      outline-offset: 4px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="back" href="../index.html">← 학생 작품 목록으로</a>
+
+    <!-- 학생 이름과 프로그램 이름을 수정하세요. -->
+    <header>
+      <p class="student">김민수 학생 작품</p>
+      <h1>프로그램 이름</h1>
+      <p>이 프로그램이 어떤 일을 하는지 한두 문장으로 소개하세요.</p>
+    </header>
+
+    <!-- 작품에 맞게 기능 이름과 설명을 수정하세요. -->
+    <section class="card">
+      <h2>주요기능 1 · 기능 이름</h2>
+      <p>
+        첫 번째 기능을 설명하세요.
+        사용자가 무엇을 입력하거나 누르면 어떤 결과가 나오는지 적어주세요.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>주요기능 2 · 기능 이름</h2>
+      <p>
+        두 번째 기능을 설명하세요.
+        이 기능이 사용자에게 어떤 도움을 주는지 적어주세요.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>주요기능 3 · 기능 이름</h2>
+      <p>
+        세 번째 기능을 설명하세요.
+        다른 기능과 구별되는 특징을 적어주세요.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>사용 방법</h2>
+      <ol>
+        <li>아래의 ‘프로그램 실행하기’ 버튼을 누릅니다.</li>
+        <li>첫 화면에서 해야 할 일을 적어주세요.</li>
+        <li>기능을 사용하는 순서를 적어주세요.</li>
+        <li>결과를 확인하는 방법을 적어주세요.</li>
+      </ol>
+    </section>
+
+    <nav class="buttons" aria-label="작품 관련 링크">
+      <a class="button" href="./app/index.html">
+        프로그램 실행하기
+      </a>
+      <a
+        class="button secondary"
+        href="./plan.pdf"
+        target="_blank"
+        rel="noopener"
+      >
+        기획서 보기 (PDF, 새 탭)
+      </a>
+    </nav>
+  </main>
+</body>
+</html>
