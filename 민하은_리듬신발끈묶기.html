@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>드래그로 배우는 실사 신발끈 묶기 리듬게임</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gothic+A1:wght@800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Jua', 'Gothic A1', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
+        }
+        .glow-title {
+            text-shadow: 0 0 15px rgba(251, 191, 36, 0.9), 0 0 30px rgba(245, 158, 11, 0.6);
+        }
+        .glow-judgement {
+            text-shadow: 0 0 20px rgba(255, 255, 255, 1), 0 0 30px rgba(234, 179, 8, 0.9);
+        }
+        .btn-bounce {
+            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.15s ease;
+        }
+        .btn-bounce:hover {
+            transform: scale(1.05);
+        }
+        .btn-bounce:active {
+            transform: scale(0.95);
+        }
+        .guide-step-active {
+            border-color: #F59E0B !important;
+            background-color: #FEF3C7 !important;
+            color: #1E1B4B !important;
+            transform: scale(1.04);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            50% { transform: scale(1.25); opacity: 0.4; }
+            100% { transform: scale(0.9); opacity: 0.8; }
+        }
+        .beat-ring {
+            animation: pulse-ring 0.8s infinite ease-in-out;
+        }
+        @keyframes arrow-flow {
+            0% { stroke-dashoffset: 40; }
+            100% { stroke-dashoffset: 0; }
+        }
+        .animated-arrow-path {
+            stroke-dasharray: 10, 10;
+            animation: arrow-flow 0.8s linear infinite;
+        }
+        .badge-locked {
+            filter: grayscale(100%) opacity(0.4);
+        }
+        .badge-glow {
+            box-shadow: 0 0 25px rgba(251, 191, 36, 0.8);
+            animation: badge-pulse 1.5s infinite alternate ease-in-out;
+        }
+        @keyframes badge-pulse {
+            0% { transform: scale(1); box-shadow: 0 0 15px rgba(251, 191, 36, 0.6); }
+            100% { transform: scale(1.08); box-shadow: 0 0 30px rgba(245, 158, 11, 0.9); }
+        }
+        .shoe-item-locked {
+            filter: grayscale(80%) brightness(0.6);
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-white flex flex-col justify-between overflow-x-hidden p-2 sm:p-4">
+
+    <header class="w-full max-w-5xl mx-auto flex flex-wrap justify-between items-center z-10 mb-2">
+        <div class="flex items-center space-x-3">
+            <span class="text-4xl sm:text-6xl animate-bounce">👟</span>
+            <div>
+                <h1 class="text-2xl sm:text-4xl text-amber-400 font-black tracking-tight glow-title">
+                    신발끈 묶기 리듬 드래그 게임
+                </h1>
+                <!-- 현재 장착 중인 칭호 표시 -->
+                <div class="flex items-center gap-2 mt-1">
+                    <span id="playerTitleBadge" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs sm:text-sm px-3 py-0.5 rounded-full font-black border border-pink-300 shadow">
+                        🐣 신발끈 초보자
+                    </span>
+                    <span class="text-xs sm:text-sm text-sky-200 font-bold">
+                        박자에 맞춰 끈을 드래그하세요! (칭호를 얻어 전설 신발 해금)
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2 sm:space-x-3 mt-2 sm:mt-0">
+            <div class="bg-slate-900/90 border-4 border-amber-400 px-3 sm:px-4 py-1.5 rounded-2xl shadow-xl text-center">
+                <div class="text-xs text-amber-300 font-bold">점수</div>
+                <div id="scoreText" class="text-2xl sm:text-3xl text-amber-400 font-black">0</div>
+            </div>
+            <div class="bg-slate-900/90 border-4 border-pink-500 px-3 sm:px-4 py-1.5 rounded-2xl shadow-xl text-center">
+                <div class="text-xs text-pink-300 font-bold">콤보</div>
+                <div id="comboText" class="text-2xl sm:text-3xl text-pink-400 font-black">0</div>
+            </div>
+            <!-- 뱃지 도감 버튼 -->
+            <button onclick="openBadgeModal()" class="btn-bounce bg-gradient-to-r from-amber-500 to-yellow-400 border-2 border-yellow-200 text-slate-950 p-2 sm:px-3 sm:py-2 rounded-2xl font-black text-xs sm:text-sm shadow-lg flex flex-col items-center">
+                <span class="text-xl sm:text-2xl">🎖️</span>
+                <span>뱃지/전설신발</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="w-full max-w-5xl mx-auto flex-1 flex flex-col items-center justify-center relative">
+
+        <!-- 안내 문구 및 박자 타이머 패널 -->
+        <div id="stepInstruction" class="w-full bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 rounded-3xl p-2.5 sm:p-3 mb-2 text-center shadow-2xl border-4 border-amber-200 transform transition duration-300">
+            <div class="flex items-center justify-center space-x-3">
+                <span id="stepBadge" class="bg-indigo-950 text-amber-300 text-sm sm:text-lg px-3 py-0.5 rounded-full font-black shadow-md">
+                    1단계
+                </span>
+                <span id="stepTitle" class="text-lg sm:text-2xl font-black tracking-wide">
+                    화살표를 따라 왼쪽에서 오른쪽으로 쓱- 드래그하세요!
+                </span>
+            </div>
+            <p id="stepDetail" class="text-sm sm:text-lg font-black text-indigo-950 mt-0.5">
+                손으로 끈을 잡고 점선 화살표 방향으로 끌어당기면 매듭이 만들어져요.
+            </p>
+        </div>
+
+        <!-- 실사 신발 및 손 드래그 메인 스테이지 (매듭 시야 확보 위해 깔끔 배치) -->
+        <div class="w-full bg-slate-900/90 rounded-3xl p-3 border-4 border-indigo-500 shadow-2xl flex flex-col items-center justify-center relative min-h-[460px] overflow-hidden">
+            
+            <!-- 판정 메세지 (매듭을 가리지 않도록 우측 상단 배치) -->
+            <div id="judgementText" class="absolute top-3 right-6 text-3xl sm:text-5xl font-black glow-judgement opacity-0 transition-all duration-300 pointer-events-none z-40">
+                PERFECT! ⭐
+            </div>
+
+            <!-- 박자 인디케이터 바 -->
+            <div class="w-full max-w-md bg-slate-800 rounded-full h-3.5 mb-2 overflow-hidden border border-slate-700 relative z-20">
+                <div id="beatProgressBar" class="bg-gradient-to-r from-cyan-400 via-amber-400 to-pink-500 h-full w-0 transition-all duration-75"></div>
+            </div>
+
+            <!-- 드래그 힌트 레이어 (상단에 작게 배치) -->
+            <div id="dragHint" class="mb-1 text-amber-300 bg-slate-950/80 px-4 py-1 rounded-full text-xs sm:text-sm font-bold border border-amber-400/50 flex items-center gap-2 z-20 pointer-events-none">
+                <span class="animate-bounce">👉</span>
+                <span id="hintText">반짝이는 노란 원에서 목적지 원까지 드래그하세요!</span>
+            </div>
+
+            <!-- 신발 & 끈 & 손 렌더링 SVG Canvas (100% 매듭 동작 시야 확보) -->
+            <div class="w-full h-[380px] sm:h-[420px] flex justify-center items-center relative overflow-hidden rounded-2xl bg-slate-950/90 border-2 border-slate-800 touch-none">
+                <svg id="gameStageSvg" viewBox="0 0 500 400" class="w-full h-full max-w-[550px] cursor-crosshair select-none">
+                    <!-- Dynamic SVG rendering by JavaScript -->
+                </svg>
+            </div>
+
+            <!-- 커스터마이징 툴바 (일반 신발 & 전설의 레전드 신발 선택) -->
+            <div id="customizerPanel" class="w-full mt-3 bg-indigo-950/90 p-2.5 rounded-2xl border-2 border-indigo-500/60 flex flex-col sm:flex-row justify-between items-center gap-2 z-20">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs sm:text-sm font-bold text-sky-300">🎨 신발 종류:</span>
+                    <div id="shoeStyleButtons" class="flex flex-wrap gap-1">
+                        <!-- Dynamic shoe buttons injected here -->
+                    </div>
+                </div>
+
+                <!-- 색상 스와치 -->
+                <div class="flex items-center gap-2">
+                    <span class="text-xs sm:text-sm font-bold text-sky-300">색상:</span>
+                    <div class="flex space-x-1.5">
+                        <button onclick="setShoeColor('#DC2626')" class="w-6 h-6 rounded-full bg-red-600 border-2 border-white hover:scale-110 transition shadow"></button>
+                        <button onclick="setShoeColor('#2563EB')" class="w-6 h-6 rounded-full bg-blue-600 border-2 border-white hover:scale-110 transition shadow"></button>
+                        <button onclick="setShoeColor('#16A34A')" class="w-6 h-6 rounded-full bg-green-600 border-2 border-white hover:scale-110 transition shadow"></button>
+                        <button onclick="setShoeColor('#D97706')" class="w-6 h-6 rounded-full bg-amber-600 border-2 border-white hover:scale-110 transition shadow"></button>
+                        <button onclick="setShoeColor('#9333EA')" class="w-6 h-6 rounded-full bg-purple-600 border-2 border-white hover:scale-110 transition shadow"></button>
+                        <button onclick="setShoeColor('#334155')" class="w-6 h-6 rounded-full bg-slate-700 border-2 border-white hover:scale-110 transition shadow"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 게임 컨트롤 버튼 -->
+        <div class="mt-3 flex justify-center w-full gap-3">
+            <button id="startBtn" onclick="toggleGame()" class="btn-bounce bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 text-xl sm:text-2xl font-black px-8 py-3 rounded-full shadow-2xl border-b-4 border-amber-600 flex items-center gap-2">
+                <span>🎵</span>
+                <span id="startBtnText">리듬 드래그 시작하기!</span>
+            </button>
+            <button id="resetBtn" onclick="resetStage()" class="btn-bounce bg-slate-800 hover:bg-slate-700 text-amber-300 text-lg font-black px-5 py-2.5 rounded-full border-2 border-amber-400/40">
+                🔄 처음부터 다시
+            </button>
+        </div>
+
+    </main>
+
+    <!-- 뱃지 & 전설의 신발 도감 팝업 모달 -->
+    <div id="badgeModal" class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-slate-900 border-4 border-amber-400 rounded-3xl p-5 max-w-xl w-full text-center relative shadow-2xl">
+            <button onclick="closeBadgeModal()" class="absolute top-3 right-4 text-slate-400 hover:text-white font-black text-2xl">✕</button>
+            <h2 class="text-2xl sm:text-3xl font-black text-amber-400 mb-1 flex items-center justify-center gap-2">
+                <span>🏆</span> <span>칭호 뱃지 & 전설 신발 도감</span>
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-300 mb-3">어려운 리듬 미션을 달성하고 전설의 레전드 신발을 해금하세요!</p>
+            
+            <div id="badgeGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[360px] overflow-y-auto p-1 text-left">
+                <!-- JavaScript renders badge & unlocked shoes here -->
+            </div>
+
+            <button onclick="closeBadgeModal()" class="mt-4 btn-bounce bg-amber-400 text-slate-950 font-black px-8 py-2 rounded-full text-lg shadow-lg">
+                닫기
+            </button>
+        </div>
+    </div>
+
+    <!-- 뱃지 & 레전드 신발 해금 축하 팝업 (우측 하단으로 이동하여 묶기 시야 방해 금지) -->
+    <div id="badgeUnlockToast" class="fixed bottom-6 right-6 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-slate-950 px-5 py-3 rounded-2xl border-4 border-amber-100 shadow-2xl flex items-center gap-3 z-50 opacity-0 pointer-events-none transition-all duration-500 max-w-md">
+        <span id="toastIcon" class="text-4xl animate-bounce">🎖️</span>
+        <div class="text-left">
+            <div class="text-xs font-black text-indigo-950 uppercase tracking-wider">🎉 새로운 칭호 & 전설 신발 해금!</div>
+            <div id="toastTitle" class="text-base font-black text-slate-950">토끼귀 마스터</div>
+            <div id="toastReward" class="text-xs font-bold text-indigo-900">🔓 [전설 신발] 해금 완료!</div>
+        </div>
+    </div>
+
+    <footer class="w-full max-w-5xl mx-auto p-2 mt-2">
+        <div class="bg-slate-900/90 backdrop-blur-md rounded-2xl p-2.5 border-2 border-slate-800 shadow-2xl">
+            <h3 class="text-xs sm:text-sm font-black text-amber-300 text-center mb-1.5 flex items-center justify-center gap-2">
+                <span>💡</span>
+                <span>'토끼귀 묶기법' 5단계 가이드</span>
+            </h3>
+            <div class="grid grid-cols-5 gap-1.5 text-xs font-black">
+                <div id="guideStep0" class="bg-slate-950 p-1.5 rounded-xl border border-slate-800 text-center transition">
+                    <div class="text-amber-400 text-[11px]">1단계</div>
+                    <div class="text-white text-[10px]">X자 교차</div>
+                </div>
+                <div id="guideStep1" class="bg-slate-950 p-1.5 rounded-xl border border-slate-800 text-center transition">
+                    <div class="text-amber-400 text-[11px]">2단계</div>
+                    <div class="text-white text-[10px]">밑으로 묶기</div>
+                </div>
+                <div id="guideStep2" class="bg-slate-950 p-1.5 rounded-xl border border-slate-800 text-center transition">
+                    <div class="text-amber-400 text-[11px]">3단계</div>
+                    <div class="text-white text-[10px]">위로 토끼귀</div>
+                </div>
+                <div id="guideStep3" class="bg-slate-950 p-1.5 rounded-xl border border-slate-800 text-center transition">
+                    <div class="text-amber-400 text-[11px]">4단계</div>
+                    <div class="text-white text-[10px]">토끼귀 X 교차</div>
+                </div>
+                <div id="guideStep4" class="bg-slate-950 p-1.5 rounded-xl border border-slate-800 text-center transition">
+                    <div class="text-amber-400 text-[11px]">5단계</div>
+                    <div class="text-white text-[10px]">꽉 당기기!</div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        /* ===================================================================
+         * 1. 전설의 신발 종류 데이터 및 난이도 높은 칭호 뱃지 정의
+         * =================================================================== */
+        const SHOE_STYLES = [
+            { id: 'sneaker', name: '스니커즈', isLegend: false },
+            { id: 'hightop', name: '하이탑 부츠', isLegend: false },
+            { id: 'running', name: '러닝화', isLegend: false },
+            { id: 'gold_legend', name: '🥇 골드 전설화', isLegend: true, reqBadge: 'score_2000' },
+            { id: 'fire_dragon', name: '🔥 불꽃 불사조', isLegend: true, reqBadge: 'combo_5' },
+            { id: 'cyber_neon', name: '⚡ 사이버 네온', isLegend: true, reqBadge: 'perfect_clear' },
+            { id: 'rainbow_aurora', name: '🌈 무지개 오로라', isLegend: true, reqBadge: 'master_clear' }
+        ];
+
+        // 난이도가 한층 높아진 칭호 뱃지 시스템
+        const BADGES = [
+            { 
+                id: 'first_clear', 
+                icon: '🐣', 
+                title: '신발끈 병아리', 
+                desc: '첫 게임 완주 성공 (최소 1,000점 이상)', 
+                unlockShoe: null,
+                condition: (s, c, step, clear, perfects) => clear && s >= 1000 
+            },
+            { 
+                id: 'combo_5', 
+                icon: '🔥', 
+                title: '연속 리듬 드래거', 
+                desc: '한 게임에서 5연속 콤보 달성!', 
+                unlockShoe: 'fire_dragon',
+                condition: (s, c) => c >= 5 
+            },
+            { 
+                id: 'score_2000', 
+                icon: '🥇', 
+                title: '알록달록 매듭 장인', 
+                desc: '최종 점수 2,000점 이상 달성!', 
+                unlockShoe: 'gold_legend',
+                condition: (s) => s >= 2000 
+            },
+            { 
+                id: 'perfect_clear', 
+                icon: '⭐', 
+                title: '올 퍼펙트 명인', 
+                desc: '한 게임 동안 PERFECT 판정 4회 이상 달성!', 
+                unlockShoe: 'cyber_neon',
+                condition: (s, c, step, clear, perfects) => clear && perfects >= 4 
+            },
+            { 
+                id: 'master_clear', 
+                icon: '👑', 
+                title: '전설의 토끼귀 신', 
+                desc: '최종 점수 3,200점 이상 전설적 기록!', 
+                unlockShoe: 'rainbow_aurora',
+                condition: (s, c, step, clear) => clear && s >= 3200 
+            }
+        ];
+
+        let unlockedBadges = new Set(); // 기본은 아무것도 해금 안됨 (실력으로 획득!)
+        let currentEquippedTitle = '🐣 초보 매듭이';
+
+        const STEPS = [
+            {
+                id: 0,
+                badge: "1단계",
+                title: "끈을 잡고 오른쪽으로 X자로 쓱- 드래그하세요!",
+                detail: "왼손으로 잡은 끈을 오른쪽 아일렛(구멍) 쪽으로 길게 끌어 넘겨줍니다.",
+                dragStart: { x: 180, y: 160 },
+                dragTarget: { x: 320, y: 160 },
+                hint: "노란 시작 원을 클릭한 채로 오른쪽 목표 점선까지 드래그!",
+                actionName: "cross"
+            },
+            {
+                id: 1,
+                badge: "2단계",
+                title: "끈을 밑으로 넣고 아래 방향으로 당겨요!",
+                detail: "교차된 끈을 중앙 동굴 밑으로 구부려 아래쪽으로 당겨 단단하게 만듭니다.",
+                dragStart: { x: 250, y: 160 },
+                dragTarget: { x: 250, y: 270 },
+                hint: "중앙에서 아래 방향으로 쓱- 당기세요!",
+                actionName: "knot"
+            },
+            {
+                id: 2,
+                badge: "3단계",
+                title: "위쪽으로 드래그해 귀여운 토끼귀 2개를 완성해요!",
+                detail: "양쪽 끈을 위 방향으로 동그랗게 솟아오르게 당겨 토끼 귀 고리를 만듭니다.",
+                dragStart: { x: 250, y: 220 },
+                dragTarget: { x: 250, y: 110 },
+                hint: "매듭에서 위쪽으로 올려서 토끼귀를 만들어요!",
+                actionName: "ears"
+            },
+            {
+                id: 3,
+                badge: "4단계",
+                title: "왼쪽 토끼귀를 오른쪽으로 X자로 포개어 넘겨요!",
+                detail: "만들어진 토끼귀 2개를 서로 교차하도록 오른쪽으로 포개어 줍니다.",
+                dragStart: { x: 190, y: 120 },
+                dragTarget: { x: 310, y: 120 },
+                hint: "왼쪽 토끼귀를 오른쪽 토끼귀 위로 드래그!",
+                actionName: "earsCross"
+            },
+            {
+                id: 4,
+                badge: "5단계",
+                title: "토끼귀 하나를 구멍 속으로 넣고 양쪽으로 쫙- 당겨요!",
+                detail: "동굴 속으로 들어간 토끼귀를 잡고 바깥쪽으로 드래그하여 완벽하게 리본을 조입니다.",
+                dragStart: { x: 250, y: 140 },
+                dragTarget: { x: 370, y: 210 },
+                hint: "바깥쪽으로 길게 쫙- 당기면 나비리본 완성!",
+                actionName: "complete"
+            }
+        ];
+
+        // 게임 변수
+        let currentStepIndex = 0;
+        let isPlaying = false;
+        let score = 0;
+        let combo = 0;
+        let perfectCount = 0;
+        let shoeColor = '#2563EB';
+        let shoeStyle = 'sneaker';
+
+        // 인터랙티브 드래그 변수
+        let isDragging = false;
+        let dragProgress = 0;
+        let currentMousePos = { x: 0, y: 0 };
+        let beatTimer = null;
+        let beatStep = 0;
+
+        // Sound Engine (Tone.js)
+        let synth = null;
+        function initAudio() {
+            if (!synth) {
+                synth = new Tone.PolySynth(Tone.Synth, {
+                    oscillator: { type: "triangle" },
+                    envelope: { attack: 0.005, decay: 0.1, sustain: 0.1, release: 0.1 }
+                }).toDestination();
+            }
+            Tone.start();
+        }
+
+        function playSound(type) {
+            if (!synth) return;
+            try {
+                if (type === 'drag') {
+                    synth.triggerAttackRelease("C5", "16n");
+                } else if (type === 'perfect') {
+                    synth.triggerAttackRelease(["E5", "G5", "C6"], "8n");
+                } else if (type === 'step') {
+                    synth.triggerAttackRelease(["C4", "G4"], "8n");
+                } else if (type === 'finish') {
+                    synth.triggerAttackRelease(["C4", "E4", "G4", "C5", "E5", "G5"], "4n");
+                } else if (type === 'tick') {
+                    synth.triggerAttackRelease("A3", "32n", undefined, 0.1);
+                }
+            } catch (e) {
+                console.log("Audio play error", e);
+            }
+        }
+
+        /* ===================================================================
+         * 2. 메인 SVG 그래픽 렌더링 (시야 장애 요소 제거 + 실사 매듭 가시성 최우선)
+         * =================================================================== */
+        function renderGameStage() {
+            const svg = document.getElementById('gameStageSvg');
+            const step = STEPS[currentStepIndex];
+
+            // A. 신발 실사풍 배경 및 본체 렌더링
+            let shoeShape = '';
+            let shoeStroke = '#0F172A';
+
+            if (shoeStyle === 'gold_legend') {
+                shoeShape = `
+                    <path d="M 120 330 L 140 150 C 170 120, 230 120, 300 150 Q 370 200, 420 270 Q 430 290, 420 330 Z" fill="url(#goldGrad)" stroke="#B45309" stroke-width="5"/>
+                    <path d="M 95 330 L 430 330 Q 440 345 435 365 Q 420 375 95 375 Z" fill="#FEF08A" stroke="#CA8A04" stroke-width="3"/>
+                    <text x="350" y="290" font-size="28" fill="#F59E0B">✨</text>
+                `;
+            } else if (shoeStyle === 'fire_dragon') {
+                shoeShape = `
+                    <path d="M 120 330 L 120 120 C 130 90, 180 80, 220 90 L 320 90 C 370 140, 400 200, 430 250 Q 440 280, 430 330 Z" fill="url(#fireGrad)" stroke="#7F1D1D" stroke-width="5"/>
+                    <path d="M 100 330 L 440 330 Q 450 330 450 365 L 100 365 Z" fill="#18181B" stroke="#EF4444" stroke-width="3"/>
+                    <text x="360" y="200" font-size="32" fill="#EF4444">🔥</text>
+                `;
+            } else if (shoeStyle === 'cyber_neon') {
+                shoeShape = `
+                    <path d="M 110 330 L 130 170 C 150 130, 200 130, 260 140 L 370 200 Q 430 240, 420 330 Z" fill="#0F172A" stroke="#06B6D4" stroke-width="6"/>
+                    <path d="M 160 210 Q 260 220, 360 250" stroke="#EC4899" stroke-width="10" fill="none"/>
+                    <path d="M 95 330 L 435 330 Q 445 340 435 370 Q 410 380 95 375 Z" fill="#1E1B4B" stroke="#A855F7" stroke-width="4"/>
+                `;
+            } else if (shoeStyle === 'rainbow_aurora') {
+                shoeShape = `
+                    <path d="M 110 330 L 140 160 C 170 135, 230 135, 300 160 Q 370 210, 420 270 Q 430 290, 420 330 Z" fill="url(#rainbowGrad)" stroke="#4338CA" stroke-width="5"/>
+                    <path d="M 95 330 L 430 330 Q 440 345 435 365 Q 420 375 95 375 Z" fill="#FFFFFF" stroke="#818CF8" stroke-width="3"/>
+                    <text x="350" y="270" font-size="32">🌈</text>
+                `;
+            } else if (shoeStyle === 'hightop') {
+                shoeShape = `
+                    <path d="M 120 330 L 120 130 C 120 100, 160 90, 210 90 L 320 90 C 360 140, 390 200, 420 240 Q 440 270, 430 330 Z" fill="url(#shoeGrad)" stroke="${shoeStroke}" stroke-width="4"/>
+                    <path d="M 100 330 L 440 330 Q 450 330 450 365 L 100 365 Z" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="3"/>
+                `;
+            } else if (shoeStyle === 'running') {
+                shoeShape = `
+                    <path d="M 110 330 L 130 180 C 150 140, 200 140, 260 150 L 370 210 Q 430 250, 420 330 Z" fill="url(#shoeGrad)" stroke="${shoeStroke}" stroke-width="4"/>
+                    <path d="M 95 330 L 435 330 Q 445 340 435 370 Z" fill="#F8FAFC" stroke="#94A3B8" stroke-width="3"/>
+                `;
+            } else { // sneaker
+                shoeShape = `
+                    <path d="M 110 330 L 140 160 C 170 135, 230 135, 300 160 Q 370 210, 420 270 Q 430 290, 420 330 Z" fill="url(#shoeGrad)" stroke="${shoeStroke}" stroke-width="4"/>
+                    <path d="M 95 330 L 430 330 Q 440 345 435 365 Z" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="3"/>
+                `;
+            }
+
+            // 아일렛(구멍) 4개
+            const eyelets = `
+                <g filter="url(#shadow)">
+                    <circle cx="180" cy="180" r="9" fill="#E2E8F0" stroke="#334155" stroke-width="3"/>
+                    <circle cx="210" cy="220" r="9" fill="#E2E8F0" stroke="#334155" stroke-width="3"/>
+                    <circle cx="320" cy="180" r="9" fill="#E2E8F0" stroke="#334155" stroke-width="3"/>
+                    <circle cx="290" cy="220" r="9" fill="#E2E8F0" stroke="#334155" stroke-width="3"/>
+                </g>
+            `;
+
+            // B. 신발끈 및 손 선명 그래픽
+            const laceColor = "#FFFBEB"; // 고급 크림 화이트 (두껍게)
+            const laceStroke = "#D97706";
+            
+            const startX = step ? step.dragStart.x : 180;
+            const startY = step ? step.dragStart.y : 160;
+            const targetX = step ? step.dragTarget.x : 320;
+            const targetY = step ? step.dragTarget.y : 160;
+
+            const curX = isDragging ? currentMousePos.x : (startX + (targetX - startX) * dragProgress);
+            const curY = isDragging ? currentMousePos.y : (startY + (targetY - startY) * dragProgress);
+
+            let dynamicLaceGraphic = '';
+
+            const handLeft = (hx, hy, angle = 0) => `
+                <g transform="translate(${hx}, ${hy}) rotate(${angle})" class="transition-transform duration-75">
+                    <path d="M 0 0 C -15 -10, -28 -5, -32 12 C -36 28, -20 38, 0 32 C 12 26, 18 10, 0 0 Z" fill="#FDBA74" stroke="#EA580C" stroke-width="3"/>
+                    <circle cx="-16" cy="16" r="11" fill="#06B6D4" stroke="#FFFFFF" stroke-width="2"/>
+                    <text x="-16" y="20" text-anchor="middle" font-size="13" font-weight="900" fill="#FFFFFF">L</text>
+                </g>
+            `;
+
+            const handRight = (hx, hy, angle = 0) => `
+                <g transform="translate(${hx}, ${hy}) rotate(${angle})" class="transition-transform duration-75">
+                    <path d="M 0 0 C 15 -10, 28 -5, 32 12 C 36 28, 20 38, 0 32 C -12 26, -18 10, 0 0 Z" fill="#FDBA74" stroke="#EA580C" stroke-width="3"/>
+                    <circle cx="16" cy="16" r="11" fill="#EC4899" stroke="#FFFFFF" stroke-width="2"/>
+                    <text x="16" y="20" text-anchor="middle" font-size="13" font-weight="900" fill="#FFFFFF">R</text>
+                </g>
+            `;
+
+            // 선명한 매듭 선 두께(14px)로 묶이는 장면 100% 가시성 보장
+            if (currentStepIndex === 0) { // 1단계: X자 교차 드래그
+                dynamicLaceGraphic = `
+                    <path d="M 180 180 L ${curX} ${curY}" stroke="${laceColor}" stroke-width="14" stroke-linecap="round" filter="url(#shadow)"/>
+                    <path d="M 320 180 L 180 220" stroke="${laceColor}" stroke-width="14" stroke-linecap="round" filter="url(#shadow)"/>
+                    ${handLeft(curX, curY, -25)}
+                    ${handRight(170, 225, 25)}
+                `;
+            } else if (currentStepIndex === 1) { // 2단계: 아래로 묶기
+                dynamicLaceGraphic = `
+                    <path d="M 180 180 L 320 220" stroke="${laceColor}" stroke-width="13"/>
+                    <path d="M 320 180 L 180 220" stroke="${laceColor}" stroke-width="13"/>
+                    <circle cx="250" cy="200" r="15" fill="${laceColor}" stroke="${laceStroke}" stroke-width="4"/>
+                    <path d="M 250 200 L ${curX} ${curY}" stroke="${laceColor}" stroke-width="14" stroke-linecap="round" filter="url(#shadow)"/>
+                    ${handLeft(curX - 20, curY, -10)}
+                    ${handRight(curX + 20, curY, 10)}
+                `;
+            } else if (currentStepIndex === 2) { // 3단계: 위로 올려 토끼귀
+                dynamicLaceGraphic = `
+                    <circle cx="250" cy="220" r="15" fill="${laceColor}" stroke="${laceStroke}" stroke-width="4"/>
+                    <path d="M 250 220 C 170 180, 160 ${curY}, 200 ${curY + 20}" fill="none" stroke="${laceColor}" stroke-width="14" stroke-linecap="round" filter="url(#shadow)"/>
+                    <path d="M 250 220 C 330 180, 340 ${curY}, 300 ${curY + 20}" fill="none" stroke="${laceColor}" stroke-width="14" stroke-linecap="round" filter="url(#shadow)"/>
+                    ${handLeft(190, curY, -15)}
+                    ${handRight(310, curY, 15)}
+                `;
+            } else if (currentStepIndex === 3) { // 4단계: 토끼귀 X자 교차
+                dynamicLaceGraphic = `
+                    <circle cx="250" cy="220" r="15" fill="${laceColor}" stroke="${laceStroke}" stroke-width="4"/>
+                    <path d="M 250 220 C 170 180, ${curX - 40} 100, ${curX} ${curY}" fill="none" stroke="${laceColor}" stroke-width="14" stroke-linecap="round" filter="url(#shadow)"/>
+                    <path d="M 250 220 C 330 180, 340 100, 280 130" fill="none" stroke="${laceColor}" stroke-width="14" stroke-linecap="round" filter="url(#shadow)"/>
+                    ${handLeft(curX, curY, -30)}
+                    ${handRight(285, 125, 30)}
+                `;
+            } else { // 5단계: 꽉 당겨서 완성!
+                dynamicLaceGraphic = `
+                    <path d="M 250 220 C 130 ${300 - curY}, 140 ${curY}, 250 220" fill="${laceColor}" stroke="${laceStroke}" stroke-width="4" filter="url(#shadow)"/>
+                    <path d="M 250 220 C 370 ${300 - curY}, 360 ${curY}, 250 220" fill="${laceColor}" stroke="${laceStroke}" stroke-width="4" filter="url(#shadow)"/>
+                    <circle cx="250" cy="220" r="18" fill="#F59E0B" stroke="#FFFFFF" stroke-width="4"/>
+                    <path d="M 245 225 Q 170 300, 140 330" fill="none" stroke="${laceColor}" stroke-width="12" stroke-linecap="round"/>
+                    <path d="M 255 225 Q 330 300, 360 330" fill="none" stroke="${laceColor}" stroke-width="12" stroke-linecap="round"/>
+                    ${handLeft(curX - 100, curY, -45)}
+                    ${handRight(curX, curY, 45)}
+                `;
+            }
+
+            // C. 가이드 화살표 & 반짝이 목적지 노드
+            let guideArrowAndNode = '';
+            if (step) {
+                guideArrowAndNode = `
+                    <defs>
+                        <marker id="arrowHead" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#F59E0B" />
+                        </marker>
+                    </defs>
+                    <path d="M ${startX} ${startY} L ${targetX} ${targetY}" stroke="#F59E0B" stroke-width="6" fill="none" class="animated-arrow-path" marker-end="url(#arrowHead)"/>
+                    <g transform="translate(${startX}, ${startY})">
+                        <circle cx="0" cy="0" r="22" fill="#F59E0B" fill-opacity="0.3" class="beat-ring"/>
+                        <circle cx="0" cy="0" r="14" fill="#F59E0B" stroke="#FFFFFF" stroke-width="3" class="shadow-lg cursor-pointer"/>
+                        <text x="0" y="5" text-anchor="middle" font-size="12" font-weight="900" fill="#1E1B4B">START</text>
+                    </g>
+                    <g transform="translate(${targetX}, ${targetY})">
+                        <circle cx="0" cy="0" r="16" fill="none" stroke="#EC4899" stroke-width="4" stroke-dasharray="4,4"/>
+                        <circle cx="0" cy="0" r="8" fill="#EC4899"/>
+                    </g>
+                `;
+            }
+
+            // SVG 조합 렌더링
+            svg.innerHTML = `
+                <defs>
+                    <linearGradient id="shoeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="${shoeColor}" />
+                        <stop offset="100%" stop-color="#0284C7" />
+                    </linearGradient>
+                    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#F59E0B" />
+                        <stop offset="50%" stop-color="#FEF08A" />
+                        <stop offset="100%" stop-color="#D97706" />
+                    </linearGradient>
+                    <linearGradient id="fireGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#EF4444" />
+                        <stop offset="100%" stop-color="#78350F" />
+                    </linearGradient>
+                    <linearGradient id="rainbowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#EC4899" />
+                        <stop offset="33%" stop-color="#8B5CF6" />
+                        <stop offset="66%" stop-color="#06B6D4" />
+                        <stop offset="100%" stop-color="#10B981" />
+                    </linearGradient>
+                    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="0" dy="8" stdDeviation="6" flood-opacity="0.6"/>
+                    </filter>
+                </defs>
+                ${shoeShape}
+                ${eyelets}
+                ${dynamicLaceGraphic}
+                ${guideArrowAndNode}
+            `;
+        }
+
+        function renderShoeStyleButtons() {
+            const container = document.getElementById('shoeStyleButtons');
+            container.innerHTML = '';
+
+            SHOE_STYLES.forEach(style => {
+                const btn = document.createElement('button');
+                const isLocked = style.isLegend && !unlockedBadges.has(style.reqBadge);
+                
+                btn.className = `px-2.5 py-1 text-xs font-bold rounded-lg border transition flex items-center gap-1 ${
+                    shoeStyle === style.id 
+                    ? 'bg-amber-400 text-slate-950 border-amber-200 font-black shadow-md' 
+                    : isLocked 
+                    ? 'bg-slate-900 text-slate-500 border-slate-800 shoe-item-locked' 
+                    : 'bg-slate-800 text-white border-slate-600 hover:bg-amber-400 hover:text-slate-950'
+                }`;
+
+                btn.onclick = () => {
+                    if (isLocked) {
+                        const reqB = BADGES.find(b => b.id === style.reqBadge);
+                        showJudgement(`🔒 [${reqB ? reqB.title : '칭호'}] 필요!`, "text-red-400");
+                        return;
+                    }
+                    shoeStyle = style.id;
+                    renderShoeStyleButtons();
+                    renderGameStage();
+                };
+
+                btn.innerHTML = `${style.name} ${isLocked ? '🔒' : ''}`;
+                container.appendChild(btn);
+            });
+        }
+
+        function setShoeColor(color) {
+            shoeColor = color;
+            renderGameStage();
+        }
+
+        /* ===================================================================
+         * 3. 드래그 제스처 및 리듬 게임 시스템
+         * =================================================================== */
+        function initDragEvents() {
+            const svg = document.getElementById('gameStageSvg');
+
+            function getSvgCoordinates(e) {
+                const rect = svg.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                const x = ((clientX - rect.left) / rect.width) * 500;
+                const y = ((clientY - rect.top) / rect.height) * 400;
+                return { x, y };
+            }
+
+            function handleStart(e) {
+                if (!isPlaying) return;
+                const pos = getSvgCoordinates(e);
+                const step = STEPS[currentStepIndex];
+                if (!step) return;
+
+                const distToStart = Math.hypot(pos.x - step.dragStart.x, pos.y - step.dragStart.y);
+                if (distToStart < 50) {
+                    isDragging = true;
+                    currentMousePos = pos;
+                    playSound('drag');
+                }
+            }
+
+            function handleMove(e) {
+                if (!isDragging || !isPlaying) return;
+                const pos = getSvgCoordinates(e);
+                currentMousePos = pos;
+
+                const step = STEPS[currentStepIndex];
+                if (step) {
+                    const totalDist = Math.hypot(step.dragTarget.x - step.dragStart.x, step.dragTarget.y - step.dragStart.y);
+                    const movedDist = Math.hypot(pos.x - step.dragStart.x, pos.y - step.dragStart.y);
+                    dragProgress = Math.min(Math.max(movedDist / totalDist, 0), 1);
+
+                    const distToTarget = Math.hypot(pos.x - step.dragTarget.x, pos.y - step.dragTarget.y);
+                    if (distToTarget < 35) {
+                        finishStepSuccess();
+                    }
+                }
+                renderGameStage();
+            }
+
+            function handleEnd() {
+                if (!isDragging) return;
+                isDragging = false;
+                if (dragProgress < 0.85) {
+                    dragProgress = 0;
+                }
+                renderGameStage();
+            }
+
+            svg.addEventListener('mousedown', handleStart);
+            window.addEventListener('mousemove', handleMove);
+            window.addEventListener('mouseup', handleEnd);
+
+            svg.addEventListener('touchstart', (e) => { e.preventDefault(); handleStart(e); }, { passive: false });
+            window.addEventListener('touchmove', (e) => { handleMove(e); }, { passive: false });
+            window.addEventListener('touchend', handleEnd);
+        }
+
+        function toggleGame() {
+            initAudio();
+            const btnText = document.getElementById('startBtnText');
+            
+            if (!isPlaying) {
+                isPlaying = true;
+                currentStepIndex = 0;
+                score = 0;
+                combo = 0;
+                perfectCount = 0;
+                dragProgress = 0;
+                
+                document.getElementById('scoreText').innerText = '0';
+                document.getElementById('comboText').innerText = '0';
+                btnText.innerText = '게임 일시정지';
+                
+                updateStepUI();
+                startBeatLoop();
+            } else {
+                pauseGame();
+            }
+        }
+
+        function pauseGame() {
+            isPlaying = false;
+            clearInterval(beatTimer);
+            document.getElementById('startBtnText').innerText = '게임 계속하기';
+        }
+
+        function resetStage() {
+            isPlaying = false;
+            clearInterval(beatTimer);
+            currentStepIndex = 0;
+            score = 0;
+            combo = 0;
+            perfectCount = 0;
+            dragProgress = 0;
+            document.getElementById('scoreText').innerText = '0';
+            document.getElementById('comboText').innerText = '0';
+            document.getElementById('startBtnText').innerText = '리듬 드래그 시작하기!';
+            document.getElementById('beatProgressBar').style.width = '0%';
+            updateStepUI();
+        }
+
+        function startBeatLoop() {
+            clearInterval(beatTimer);
+            beatStep = 0;
+            const bar = document.getElementById('beatProgressBar');
+
+            beatTimer = setInterval(() => {
+                if (!isPlaying) return;
+                beatStep = (beatStep + 1.2) % 100;
+                bar.style.width = `${beatStep}%`;
+
+                if (Math.abs(beatStep - 25) < 1.2 || Math.abs(beatStep - 75) < 1.2) {
+                    playSound('tick');
+                }
+            }, 25);
+        }
+
+        function finishStepSuccess() {
+            isDragging = false;
+            dragProgress = 1.0;
+
+            // 엄격한 박자 타임 판정 (PERFECT 구간이 좁아져 난이도 상승)
+            let timingBonus = (beatStep >= 80 || beatStep <= 20) ? 250 : 100;
+            if (timingBonus === 250) perfectCount++;
+
+            combo++;
+            score += 350 + timingBonus + (combo * 50);
+
+            document.getElementById('scoreText').innerText = score;
+            document.getElementById('comboText').innerText = combo;
+
+            showJudgement(timingBonus === 250 ? "PERFECT! ⭐" : "GREAT! 👍", timingBonus === 250 ? "text-amber-300" : "text-green-300");
+            playSound(timingBonus === 250 ? 'perfect' : 'step');
+
+            checkBadges(false);
+
+            setTimeout(() => {
+                currentStepIndex++;
+                dragProgress = 0;
+                if (currentStepIndex >= STEPS.length) {
+                    completeGame();
+                } else {
+                    updateStepUI();
+                }
+            }, 300);
+        }
+
+        function updateStepUI() {
+            const step = STEPS[currentStepIndex];
+            const badge = document.getElementById('stepBadge');
+            const title = document.getElementById('stepTitle');
+            const detail = document.getElementById('stepDetail');
+            const hintText = document.getElementById('hintText');
+
+            for (let i = 0; i < 5; i++) {
+                const guide = document.getElementById(`guideStep${i}`);
+                if (guide) {
+                    if (i === currentStepIndex) guide.classList.add('guide-step-active');
+                    else guide.classList.remove('guide-step-active');
+                }
+            }
+
+            if (step) {
+                badge.innerText = step.badge;
+                title.innerText = step.title;
+                detail.innerText = step.detail;
+                hintText.innerText = step.hint;
+            }
+            renderGameStage();
+        }
+
+        function showJudgement(text, colorClass) {
+            const el = document.getElementById('judgementText');
+            el.innerText = text;
+            el.className = `absolute top-3 right-6 text-3xl sm:text-5xl font-black glow-judgement transition-all duration-300 pointer-events-none z-40 opacity-100 transform -translate-y-2 ${colorClass}`;
+            
+            setTimeout(() => {
+                el.classList.replace('opacity-100', 'opacity-0');
+            }, 500);
+        }
+
+        function completeGame() {
+            isPlaying = false;
+            clearInterval(beatTimer);
+            playSound('finish');
+
+            checkBadges(true);
+
+            confetti({
+                particleCount: 220,
+                spread: 120,
+                origin: { y: 0.6 }
+            });
+
+            const badge = document.getElementById('stepBadge');
+            const title = document.getElementById('stepTitle');
+            const detail = document.getElementById('stepDetail');
+            const hintText = document.getElementById('hintText');
+
+            badge.innerText = "🏆 완벽 완성!";
+            title.innerText = "야호! 완벽한 나비 리본 매듭이 완성되었어요!";
+            detail.innerHTML = `최종 점수: <span class="text-amber-900 font-black text-2xl">${score}점</span> (PERFECT ${perfectCount}회)! 칭호: <span class="text-indigo-950 font-black text-xl">${currentEquippedTitle}</span>`;
+            hintText.innerText = "도전 완료! 뱃지 도감에서 해금된 전설 신발을 확인해보세요!";
+
+            document.getElementById('startBtnText').innerText = '다시 도전하기';
+            renderShoeStyleButtons();
+            renderGameStage();
+        }
+
+        function checkBadges(isGameCleared = false) {
+            BADGES.forEach(badge => {
+                if (!unlockedBadges.has(badge.id)) {
+                    if (badge.condition(score, combo, currentStepIndex + 1, isGameCleared, perfectCount)) {
+                        unlockedBadges.add(badge.id);
+                        currentEquippedTitle = `${badge.icon} ${badge.title}`;
+                        document.getElementById('playerTitleBadge').innerText = currentEquippedTitle;
+                        
+                        // 전설의 신발 자동 해금
+                        const rewardShoe = SHOE_STYLES.find(s => s.id === badge.unlockShoe);
+                        showBadgeToast(badge, rewardShoe);
+                        renderShoeStyleButtons();
+                    }
+                }
+            });
+        }
+
+        function showBadgeToast(badge, rewardShoe) {
+            const toast = document.getElementById('badgeUnlockToast');
+            document.getElementById('toastIcon').innerText = badge.icon;
+            document.getElementById('toastTitle').innerText = `${badge.title} 획득!`;
+            
+            const rewardEl = document.getElementById('toastReward');
+            if (rewardShoe) {
+                rewardEl.innerText = `🔓 [${rewardShoe.name}] 해금 완료!`;
+            } else {
+                rewardEl.innerText = `🎉 칭호 획득 축하합니다!`;
+            }
+            
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 3500);
+        }
+
+        function openBadgeModal() {
+            const grid = document.getElementById('badgeGrid');
+            grid.innerHTML = '';
+
+            BADGES.forEach(badge => {
+                const isUnlocked = unlockedBadges.has(badge.id);
+                const rewardShoe = SHOE_STYLES.find(s => s.id === badge.unlockShoe);
+
+                const badgeEl = document.createElement('div');
+                badgeEl.className = `p-3 rounded-2xl border-2 flex flex-col justify-between transition ${
+                    isUnlocked 
+                    ? 'bg-slate-800 border-amber-400 text-amber-300 badge-glow' 
+                    : 'bg-slate-950/80 border-slate-800 text-slate-500 badge-locked'
+                }`;
+                badgeEl.innerHTML = `
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-3xl">${badge.icon}</span>
+                            <div>
+                                <div class="font-black text-sm text-white">${badge.title}</div>
+                                <div class="text-[10px] text-amber-400 font-bold">${isUnlocked ? '획득 완료 ✓' : '잠김 🔒'}</div>
+                            </div>
+                        </div>
+                        <div class="text-[11px] text-slate-300 font-bold leading-tight mt-1">${badge.desc}</div>
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-slate-700/60 text-[10px] font-black text-sky-300 flex items-center justify-between">
+                        <span>보상: ${rewardShoe ? rewardShoe.name : '칭호 획득'}</span>
+                        ${isUnlocked ? '<span class="text-green-400">해금됨</span>' : '<span class="text-slate-500">🔒</span>'}
+                    </div>
+                `;
+                grid.appendChild(badgeEl);
+            });
+
+            document.getElementById('badgeModal').classList.remove('hidden');
+        }
+
+        function closeBadgeModal() {
+            document.getElementById('badgeModal').classList.add('hidden');
+        }
+
+        window.onload = () => {
+            renderShoeStyleButtons();
+            renderGameStage();
+            initDragEvents();
+        };
+    </script>
+</body>
+</html>

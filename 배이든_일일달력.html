@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일일달력</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Jua', 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .fade-in {
+            animation: fadeIn 0.4s ease-in-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4 min-h-screen">
+
+    <div id="app" class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-indigo-100 flex flex-col min-h-[650px] relative">
+        
+        <!-- Top Navigation Bar with Settings Button -->
+        <div class="px-6 py-3 border-b border-gray-100 flex items-center justify-between bg-white">
+            <span class="font-extrabold text-gray-800 text-sm flex items-center gap-1.5">
+                <span id="app-theme-icon">📅</span> 일일달력
+            </span>
+            <button onclick="openSettingsModal()" class="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition-all shadow-sm">
+                ⚙️
+            </button>
+        </div>
+
+        <!-- Dynamic Content injected via JS -->
+        <div id="screen-container" class="flex-1 flex flex-col p-6">
+            <!-- Rendered by JavaScript -->
+        </div>
+
+    </div>
+
+    <!-- Custom Modal for Alerts/Messages -->
+    <div id="modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl p-6 max-w-xs w-full text-center shadow-2xl transform transition-all scale-95">
+            <div id="modal-icon" class="text-4xl mb-3">🎉</div>
+            <h3 id="modal-title" class="text-xl font-bold text-gray-800 mb-2">알림</h3>
+            <p id="modal-message" class="text-gray-600 mb-5 text-sm"></p>
+            <button onclick="closeModal()" id="modal-action-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-bold transition-all shadow-md active:scale-95">확인</button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-xs w-full shadow-2xl space-y-5">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="text-lg font-bold text-gray-800">⚙️ 설정</h3>
+                <button onclick="closeSettingsModal()" class="text-gray-400 hover:text-gray-600 font-bold text-lg">✕</button>
+            </div>
+
+            <!-- Theme Color Picker -->
+            <div>
+                <label class="block text-xs font-bold text-gray-700 mb-2">🎨 테마 색상 선택</label>
+                <div class="flex gap-2 justify-center">
+                    <button onclick="changeTheme('indigo')" class="w-10 h-10 rounded-full bg-indigo-600 hover:scale-110 transition-transform shadow-md"></button>
+                    <button onclick="changeTheme('purple')" class="w-10 h-10 rounded-full bg-purple-600 hover:scale-110 transition-transform shadow-md"></button>
+                    <button onclick="changeTheme('rose')" class="w-10 h-10 rounded-full bg-rose-600 hover:scale-110 transition-transform shadow-md"></button>
+                    <button onclick="changeTheme('emerald')" class="w-10 h-10 rounded-full bg-emerald-600 hover:scale-110 transition-transform shadow-md"></button>
+                    <button onclick="changeTheme('amber')" class="w-10 h-10 rounded-full bg-amber-600 hover:scale-110 transition-transform shadow-md"></button>
+                </div>
+            </div>
+
+            <!-- Account Status & Logout -->
+            <div class="bg-gray-50 rounded-2xl p-3 border border-gray-100">
+                <span class="text-[11px] font-bold text-gray-500 block mb-1">계정 상태</span>
+                <p id="settings-user-status" class="text-xs font-semibold text-gray-800 mb-3 truncate">로그인 안 됨</p>
+                <button id="settings-auth-btn" onclick="handleAuthAction()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 rounded-xl font-bold text-xs transition-all">
+                    구글 로그인
+                </button>
+            </div>
+
+            <button onclick="closeSettingsModal()" class="w-full bg-gray-800 hover:bg-gray-900 text-white py-2.5 rounded-xl font-bold text-xs transition-all">
+                닫기
+            </button>
+        </div>
+    </div>
+
+    <!-- Photo & Text Verification Modal -->
+    <div id="photo-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 class="text-xl font-bold text-gray-800 mb-1 text-center">📸 오늘의 미션 인증</h3>
+            <p id="modal-date-text" class="text-xs font-bold mb-3 text-center text-indigo-600"></p>
+            
+            <div id="camera-preview" class="w-full h-40 bg-gray-50 rounded-2xl mb-3 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center overflow-hidden relative">
+                <span id="placeholder-text" class="text-gray-400 text-xs">사진을 선택하거나 촬영하세요</span>
+                <img id="preview-img" class="w-full h-full object-cover hidden" alt="Preview"/>
+            </div>
+
+            <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+            
+            <button onclick="document.getElementById('file-input').click()" class="theme-btn-light w-full py-2 rounded-xl font-bold text-xs transition-all mb-3 border">
+                📷 사진 파일 선택하기
+            </button>
+
+            <div class="mb-3">
+                <label class="block text-xs font-bold text-gray-700 mb-1">소감 또는 일기 남기기 <span class="text-rose-500">* (1줄 이상 필수)</span></label>
+                <textarea id="journal-input" rows="3" placeholder="오늘 미션을 하면서 느낀 점을 1줄 이상 적어주세요!" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                <p id="journal-warning" class="text-[10px] text-rose-500 mt-1 hidden">내용을 1줄 이상 작성해주세요!</p>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="closePhotoModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 py-2.5 rounded-xl font-bold text-xs transition-all">취소</button>
+                <button onclick="confirmPhotoSubmission()" class="theme-btn flex-1 text-white py-2.5 rounded-xl font-bold text-xs transition-all shadow-md">완료 및 색칠하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Entry Details Modal -->
+    <div id="view-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 id="view-modal-title" class="text-xl font-bold text-indigo-600 mb-1 text-center">📅 인증 기록</h3>
+            <p id="view-modal-date" class="text-xs text-gray-500 font-bold mb-3 text-center"></p>
+            
+            <div class="w-full h-48 bg-gray-100 rounded-2xl mb-4 overflow-hidden shadow-inner flex items-center justify-center">
+                <img id="view-modal-img" class="w-full h-full object-cover" alt="Certified Photo"/>
+            </div>
+
+            <div class="bg-gray-50 border border-gray-100 rounded-2xl p-3 mb-4">
+                <span class="text-[10px] font-bold text-gray-500 block mb-1">남긴 일기 / 소감</span>
+                <p id="view-modal-journal" class="text-xs text-gray-700 whitespace-pre-line leading-relaxed"></p>
+            </div>
+
+            <button onclick="closeViewModal()" class="theme-btn w-full text-white py-2.5 rounded-xl font-bold text-xs transition-all shadow-md">닫기</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously, signInWithCustomToken, signOut, onAuthStateChanged, linkWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'ilil-calendar-app';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDummyKeyForSandboxEnvironment",
+            authDomain: "sandbox.firebaseapp.com",
+            projectId: "sandbox-project",
+            storageBucket: "sandbox.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123:web:abc"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const googleProvider = new GoogleAuthProvider();
+
+        let currentUser = null;
+        let unsubscribeFirestore = null;
+
+        // Theme definitions
+        const themes = {
+            indigo: { primary: 'indigo', hex: '#4f46e5', lightBg: '#eef2ff', border: '#c7d2fe', text: '#4f46e5' },
+            purple: { primary: 'purple', hex: '#9333ea', lightBg: '#f3e8ff', border: '#e9d5ff', text: '#9333ea' },
+            rose: { primary: 'rose', hex: '#e11d48', lightBg: '#ffe4e6', border: '#fecdd3', text: '#e11d48' },
+            emerald: { primary: 'emerald', hex: '#059669', lightBg: '#ecfdf5', border: '#a7f3d0', text: '#059669' },
+            amber: { primary: 'amber', hex: '#d97706', lightBg: '#fffbeb', border: '#fde68a', text: '#d97706' }
+        };
+
+        let state = {
+            currentScreen: 'start',
+            customReward: '내가 원하는 멋진 선물 & 자유시간 🎁',
+            history: {},
+            pendingDateKey: null,
+            tempImage: null,
+            currentYear: new Date().getFullYear(),
+            currentMonth: new Date().getMonth(),
+            theme: 'indigo'
+        };
+
+        // Local storage helpers
+        const STORAGE_KEY_REWARD = 'ilil_calendar_reward';
+        const STORAGE_KEY_HISTORY = 'ilil_calendar_history';
+        const STORAGE_KEY_THEME = 'ilil_calendar_theme';
+
+        function loadLocalData() {
+            try {
+                const savedReward = localStorage.getItem(STORAGE_KEY_REWARD);
+                const savedHistory = localStorage.getItem(STORAGE_KEY_HISTORY);
+                const savedTheme = localStorage.getItem(STORAGE_KEY_THEME);
+                if (savedReward) state.customReward = savedReward;
+                if (savedHistory) state.history = JSON.parse(savedHistory);
+                if (savedTheme && themes[savedTheme]) state.theme = savedTheme;
+            } catch (e) {
+                console.error("Local storage load error:", e);
+            }
+        }
+
+        function saveLocalData() {
+            try {
+                localStorage.setItem(STORAGE_KEY_REWARD, state.customReward);
+                localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(state.history));
+                localStorage.setItem(STORAGE_KEY_THEME, state.theme);
+            } catch (e) {
+                console.error("Local storage save error:", e);
+            }
+        }
+
+        loadLocalData();
+
+        const titles = [
+            '끈기의 마스터 👑',
+            '작심삼일 타파왕 🔥',
+            '꾸준함의 천재 🌟',
+            '작은 성취의 영웅 🦸‍♂️',
+            '내일의 승리자 🎯'
+        ];
+
+        window.applyThemeStyles = function() {
+            const t = themes[state.theme];
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.style.backgroundColor = t.hex;
+            });
+            document.querySelectorAll('.theme-btn-light').forEach(btn => {
+                btn.style.backgroundColor = t.lightBg;
+                btn.style.color = t.hex;
+                btn.style.borderColor = t.border;
+            });
+        }
+
+        window.changeTheme = function(themeName) {
+            state.theme = themeName;
+            saveLocalData();
+            applyThemeStyles();
+            render();
+        }
+
+        window.showModal = function(title, message, icon = '🎉', callback = null) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-message').innerText = message;
+            document.getElementById('modal-icon').innerText = icon;
+            const actionBtn = document.getElementById('modal-action-btn');
+            actionBtn.onclick = function() {
+                closeModal();
+                if (callback) callback();
+            };
+            document.getElementById('modal').classList.remove('hidden');
+            document.getElementById('modal').classList.add('flex');
+        }
+
+        window.closeModal = function() {
+            document.getElementById('modal').classList.add('hidden');
+            document.getElementById('modal').classList.remove('flex');
+        }
+
+        window.openSettingsModal = function() {
+            const userStatus = document.getElementById('settings-user-status');
+            const authBtn = document.getElementById('settings-auth-btn');
+
+            if (currentUser && !currentUser.isAnonymous) {
+                userStatus.innerText = `${currentUser.displayName || currentUser.email || '구글 사용자'}님 (로그인됨)`;
+                authBtn.innerText = '로그아웃';
+                authBtn.className = 'w-full bg-rose-100 hover:bg-rose-200 text-rose-700 py-2 rounded-xl font-bold text-xs transition-all';
+            } else {
+                userStatus.innerText = '로그인되지 않음';
+                authBtn.innerText = '구글 로그인 하기';
+                authBtn.className = 'w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-xl font-bold text-xs transition-all shadow-sm';
+            }
+
+            document.getElementById('settings-modal').classList.remove('hidden');
+            document.getElementById('settings-modal').classList.add('flex');
+        }
+
+        window.closeSettingsModal = function() {
+            document.getElementById('settings-modal').classList.add('hidden');
+            document.getElementById('settings-modal').classList.remove('flex');
+        }
+
+        window.setScreen = function(screenName) {
+            state.currentScreen = screenName;
+            render();
+            applyThemeStyles();
+        }
+
+        window.handleAuthAction = async function() {
+            if (currentUser && !currentUser.isAnonymous) {
+                try {
+                    await signOut(auth);
+                    currentUser = null;
+                    localStorage.removeItem('ilil_calendar_autologin');
+                    closeSettingsModal();
+                    showModal('로그아웃 완료', '안전하게 로그아웃되었습니다.', '👋');
+                    openSettingsModal();
+                } catch (error) {
+                    console.error("Signout error:", error);
+                }
+            } else {
+                try {
+                    await signInWithPopup(auth, googleProvider);
+                    const autoLoginChecked = document.getElementById('auto-login-checkbox')?.checked || false;
+                    if (autoLoginChecked) {
+                        localStorage.setItem('ilil_calendar_autologin', 'true');
+                    }
+                    closeSettingsModal();
+                    showModal('로그인 성공', '구글 계정으로 로그인되었습니다!', '✨');
+                } catch (error) {
+                    showModal('로그인 안내', '샌드박스 환경에서는 게스트 모드로 안전하게 연결됩니다! 데이터 저장은 정상 작동합니다. 💡', '✨');
+                }
+            }
+        }
+
+        window.startJourney = async function() {
+            const autoLogin = localStorage.getItem('ilil_calendar_autologin') === 'true';
+
+            if (!currentUser || currentUser.isAnonymous) {
+                try {
+                    if (autoLogin) {
+                        try {
+                            await signInWithPopup(auth, googleProvider);
+                        } catch (e) {
+                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                await signInWithCustomToken(auth, __initial_auth_token);
+                            } else {
+                                await signInAnonymously(auth);
+                            }
+                        }
+                    } else {
+                        try {
+                            await signInWithPopup(auth, googleProvider);
+                            const autoLoginChecked = document.getElementById('auto-login-checkbox')?.checked || false;
+                            if (autoLoginChecked) {
+                                localStorage.setItem('ilil_calendar_autologin', 'true');
+                            }
+                        } catch (popupErr) {
+                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                await signInWithCustomToken(auth, __initial_auth_token);
+                            } else {
+                                await signInAnonymously(auth);
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error("Auth init error:", e);
+                }
+            }
+
+            const today = new Date();
+            if (today.getDay() === 0) {
+                setScreen('result');
+            } else {
+                setScreen('main');
+            }
+        }
+
+        async function initAuth() {
+            const autoLogin = localStorage.getItem('ilil_calendar_autologin') === 'true';
+            if (autoLogin) {
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (e) {
+                    await signInAnonymously(auth);
+                }
+            }
+
+            onAuthStateChanged(auth, async (user) => {
+                currentUser = user;
+                if (user) {
+                    setupCloudSync(user.uid);
+                }
+            });
+        }
+
+        function setupCloudSync(userId) {
+            if (unsubscribeFirestore) {
+                unsubscribeFirestore();
+            }
+
+            const docRef = doc(db, 'artifacts', appId, 'users', userId, 'calendarData', 'main');
+            
+            unsubscribeFirestore = onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.customReward) state.customReward = data.customReward;
+                    if (data.history) state.history = data.history;
+                    saveLocalData();
+                    render();
+                    applyThemeStyles();
+                } else {
+                    setDoc(docRef, {
+                        customReward: state.customReward,
+                        history: state.history
+                    }, { merge: true }).catch(err => {});
+                }
+            }, (error) => {});
+        }
+
+        async function saveToCloud() {
+            saveLocalData();
+            if (!currentUser) return;
+            const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'calendarData', 'main');
+            try {
+                await setDoc(docRef, {
+                    customReward: state.customReward,
+                    history: state.history
+                }, { merge: true });
+            } catch (e) {}
+        }
+
+        window.render = function() {
+            const container = document.getElementById('screen-container');
+            container.innerHTML = '';
+            const t = themes[state.theme];
+
+            if (state.currentScreen === 'start') {
+                const autoLoginSaved = localStorage.getItem('ilil_calendar_autologin') === 'true';
+                container.innerHTML = `
+                    <div class="flex-1 flex flex-col items-center justify-center text-center fade-in py-10">
+                        <div class="w-24 h-24 rounded-3xl shadow-lg flex items-center justify-center text-5xl mb-6 transform hover:rotate-6 transition-transform" style="background: linear-gradient(135deg, ${t.hex}, #a855f7);">
+                            📅
+                        </div>
+                        <h1 class="text-4xl font-extrabold text-gray-800 mb-3 tracking-wide">일일달력</h1>
+                        <p class="text-gray-500 text-sm mb-6 px-4 leading-relaxed">
+                            하고 싶지 않은 일도 매일 조금씩!<br>오늘 하루를 채우고 일요일에 보상을 받아가세요. ✨
+                        </p>
+                        
+                        <div class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 mb-4 text-left">
+                            <label class="block font-bold text-gray-800 text-xs mb-1">🎁 나만의 목표 보상 설정</label>
+                            <input type="text" id="reward-input" value="${state.customReward}" oninput="updateReward(this.value)" class="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 font-semibold focus:outline-none focus:ring-2" placeholder="받고 싶은 보상을 적어보세요">
+                        </div>
+
+                        <!-- Auto Login Checkbox -->
+                        <div class="flex items-center justify-start w-full mb-6 px-2">
+                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                <input type="checkbox" id="auto-login-checkbox" ${autoLoginSaved ? 'checked' : ''} class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
+                                <span class="text-xs font-semibold text-gray-600">다음부터 이 계정으로 자동 로그인</span>
+                            </label>
+                        </div>
+
+                        <button onclick="startJourney()" class="theme-btn w-full text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-98 text-lg">
+                            시작하기 🚀
+                        </button>
+                    </div>
+                `;
+            } else if (state.currentScreen === 'main') {
+                const year = state.currentYear;
+                const month = state.currentMonth;
+                
+                const firstDayIndex = new Date(year, month, 1).getDay();
+                const totalDays = new Date(year, month + 1, 0).getDate();
+                
+                const todayObj = new Date();
+                const todayKey = `${todayObj.getFullYear()}-${String(todayObj.getMonth() + 1).padStart(2, '0')}-${String(todayObj.getDate()).padStart(2, '0')}`;
+
+                let completedCount = 0;
+                for (let d = 1; d <= totalDays; d++) {
+                    const dKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                    if (state.history[dKey]) completedCount++;
+                }
+
+                let gridHtml = '';
+                const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
+                weekDays.forEach(wd => {
+                    gridHtml += `<div class="text-center font-bold text-xs text-gray-400 py-1">${wd}</div>`;
+                });
+
+                for (let i = 0; i < firstDayIndex; i++) {
+                    gridHtml += `<div></div>`;
+                }
+
+                for (let d = 1; d <= totalDays; d++) {
+                    const dKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                    const isCompleted = state.history[dKey];
+                    const isToday = (dKey === todayKey);
+
+                    let cellStyle = 'bg-gray-50 border-gray-200 text-gray-500 hover:border-gray-400';
+                    if (isCompleted) {
+                        cellStyle = 'text-white shadow-md font-bold border-transparent';
+                    } else if (isToday) {
+                        cellStyle = 'bg-purple-50 border-purple-400 text-purple-700 font-bold ring-2 ring-purple-200';
+                    }
+
+                    gridHtml += `
+                        <div onclick="handleDateClick(${year}, ${month + 1}, ${d})" class="aspect-square rounded-xl border flex flex-col items-center justify-center cursor-pointer transition-all transform hover:scale-105 relative ${cellStyle}" ${isCompleted ? `style="background-color: ${t.hex};"` : ''}>
+                            <span class="text-sm">${d}</span>
+                            ${isCompleted ? '<span class="text-[10px] mt-0.5">✓</span>' : isToday ? '<span class="text-[9px] text-purple-600 font-bold">오늘</span>' : ''}
+                        </div>
+                    `;
+                }
+
+                container.innerHTML = `
+                    <div class="flex-1 flex flex-col fade-in">
+                        <div class="flex items-center justify-between mb-3">
+                            <button onclick="setScreen('start')" class="text-gray-400 hover:text-gray-600 font-bold text-xs bg-gray-100 px-3 py-1.5 rounded-xl transition-all">← 처음으로</button>
+                            <span class="text-xs font-bold px-3 py-1.5 rounded-full" style="background-color: ${t.lightBg}; color: ${t.text};">달성: ${completedCount}일</span>
+                        </div>
+
+                        <div class="flex items-center justify-between mb-4 bg-gray-50 p-3 rounded-2xl border border-gray-200">
+                            <button onclick="changeMonth(-1)" class="w-8 h-8 bg-white rounded-xl shadow text-gray-600 font-bold flex items-center justify-center hover:bg-gray-100">&lt;</button>
+                            <h2 class="text-lg font-extrabold text-gray-800">${year}년 ${month + 1}월</h2>
+                            <button onclick="changeMonth(1)" class="w-8 h-8 bg-white rounded-xl shadow text-gray-600 font-bold flex items-center justify-center hover:bg-gray-100">&gt;</button>
+                        </div>
+
+                        <p class="text-[11px] font-bold text-center mb-2" style="color: ${t.text};">💡 오늘 날짜만 클릭해서 인증할 수 있어요! 완료된 날은 클릭해 사진과 글을 확인하세요.</p>
+
+                        <div class="grid grid-cols-7 gap-1.5 mb-4">
+                            ${gridHtml}
+                        </div>
+
+                        <div class="mt-auto bg-gray-50 border border-gray-200 rounded-2xl p-4 flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-bold block mb-0.5" style="color: ${t.text};">나의 목표 보상</span>
+                                <span class="text-xs font-bold text-gray-800 truncate max-w-[200px] block">${state.customReward}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (state.currentScreen === 'result') {
+                const todayObj = new Date();
+
+                let weekCompleted = true;
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date();
+                    d.setDate(todayObj.getDate() - i);
+                    const dKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                    if (!state.history[dKey]) {
+                        weekCompleted = false;
+                        break;
+                    }
+                }
+
+                container.innerHTML = `
+                    <div class="flex-1 flex flex-col items-center justify-center text-center fade-in py-6">
+                        <div class="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center text-4xl mb-4 shadow-inner animate-bounce">
+                            ${weekCompleted ? '🏆' : '😢'}
+                        </div>
+                        <h2 class="text-3xl font-extrabold text-gray-800 mb-1">일요일 결과 발표</h2>
+                        
+                        ${weekCompleted ? `
+                            <p class="text-gray-500 text-sm mb-6">일주일 동안 미션을 완벽히 수행했습니다!</p>
+                            <div class="theme-btn rounded-2xl p-5 text-white mb-6 shadow-lg text-left" style="background-color: ${t.hex};">
+                                <span class="text-xs uppercase tracking-wider opacity-80 block mb-1">획득한 칭호</span>
+                                <h3 class="text-xl font-extrabold mb-3">${titles[Math.floor(Math.random() * titles.length)]}</h3>
+                                <div class="border-t border-white/20 pt-3 flex justify-between items-center">
+                                    <span class="text-xs opacity-80">획득한 보상</span>
+                                    <span class="text-sm font-bold truncate max-w-[160px]">${state.customReward}</span>
+                                </div>
+                            </div>
+                        ` : `
+                            <p class="text-gray-500 text-sm mb-6">일주일을 다 채우지 못했어요...</p>
+                            <div class="w-full bg-gradient-to-r from-gray-500 to-slate-600 rounded-2xl p-5 text-white mb-6 shadow-lg text-left">
+                                <span class="text-xs uppercase tracking-wider opacity-80 block mb-1">획득한 칭호</span>
+                                <h3 class="text-xl font-extrabold mb-3">일주일 못해 애매하게 슬픈 사람 💧</h3>
+                                <div class="border-t border-white/20 pt-3 flex justify-between items-center">
+                                    <span class="text-xs opacity-80">보상</span>
+                                    <span class="text-sm font-bold">없음 (다음 주에 도전하세요!)</span>
+                                </div>
+                            </div>
+                        `}
+
+                        <div class="flex gap-3 w-full">
+                            <button onclick="setScreen('main')" class="theme-btn flex-1 text-white font-bold py-3.5 rounded-xl transition-all text-sm shadow-md" style="background-color: ${t.hex};">
+                                달력으로 돌아가기
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        window.updateReward = function(val) {
+            state.customReward = val;
+            saveToCloud();
+        }
+
+        window.changeMonth = function(direction) {
+            state.currentMonth += direction;
+            if (state.currentMonth > 11) {
+                state.currentMonth = 0;
+                state.currentYear++;
+            } else if (state.currentMonth < 0) {
+                state.currentMonth = 11;
+                state.currentYear--;
+            }
+            render();
+            applyThemeStyles();
+        }
+
+        window.handleDateClick = function(year, month, day) {
+            const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            if (state.history[dateKey]) {
+                const entry = state.history[dateKey];
+                document.getElementById('view-modal-title').innerText = `📅 ${year}년 ${month}월 ${day}일 인증 기록`;
+                document.getElementById('view-modal-date').innerText = `완료일: ${entry.date || '기록됨'}`;
+                document.getElementById('view-modal-img').src = entry.image || 'https://placehold.co/400x300/6366f1/ffffff?text=Mission+Complete!';
+                document.getElementById('view-modal-journal').innerText = entry.journal || '작성된 일기나 소감이 없습니다.';
+                document.getElementById('view-modal').classList.remove('hidden');
+                document.getElementById('view-modal').classList.add('flex');
+                return;
+            }
+
+            const todayObj = new Date();
+            const todayKey = `${todayObj.getFullYear()}-${String(todayObj.getMonth() + 1).padStart(2, '0')}-${String(todayObj.getDate()).padStart(2, '0')}`;
+
+            if (dateKey !== todayKey) {
+                showModal('오늘 날짜만 선택 가능해요! ⏰', '과거 날짜나 미래 날짜는 색칠할 수 없습니다. 오늘 날짜를 클릭하여 인증해주세요!', '⚠️');
+                return;
+            }
+
+            state.pendingDateKey = dateKey;
+            state.tempImage = null;
+            document.getElementById('preview-img').classList.add('hidden');
+            document.getElementById('placeholder-text').classList.remove('hidden');
+            document.getElementById('journal-input').value = '';
+            document.getElementById('journal-warning').classList.add('hidden');
+            document.getElementById('modal-date-text').innerText = `${year}년 ${month}월 ${day}일 (오늘)`;
+            document.getElementById('photo-modal').classList.remove('hidden');
+            document.getElementById('photo-modal').classList.add('flex');
+        }
+
+        window.closePhotoModal = function() {
+            document.getElementById('photo-modal').classList.add('hidden');
+            document.getElementById('photo-modal').classList.remove('flex');
+            state.pendingDateKey = null;
+        }
+
+        window.closeViewModal = function() {
+            document.getElementById('view-modal').classList.add('hidden');
+            document.getElementById('view-modal').classList.remove('flex');
+        }
+
+        window.handleFileSelect = function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    state.tempImage = e.target.result;
+                    const preview = document.getElementById('preview-img');
+                    preview.src = state.tempImage;
+                    preview.classList.remove('hidden');
+                    document.getElementById('placeholder-text').classList.add('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        window.confirmPhotoSubmission = function() {
+            const journalText = document.getElementById('journal-input').value.trim();
+            
+            if (journalText.length === 0) {
+                document.getElementById('journal-warning').classList.remove('hidden');
+                return;
+            } else {
+                document.getElementById('journal-warning').classList.add('hidden');
+            }
+
+            if (!state.tempImage) {
+                state.tempImage = 'https://placehold.co/400x300/6366f1/ffffff?text=Today+Mission+Complete!';
+            }
+
+            if (state.pendingDateKey) {
+                state.history[state.pendingDateKey] = {
+                    date: new Date().toLocaleDateString(),
+                    image: state.tempImage,
+                    journal: journalText
+                };
+                saveToCloud();
+            }
+
+            closePhotoModal();
+            render();
+            applyThemeStyles();
+
+            const todayObj = new Date();
+            if (todayObj.getDay() === 0) {
+                setScreen('result');
+            } else {
+                showModal('색칠 완료!', '오늘 하루도 미션을 수행하고 달력을 멋지게 채웠습니다! 🎨', '✨');
+            }
+        }
+
+        window.onload = function() {
+            initAuth();
+            render();
+            applyThemeStyles();
+        }
+    </script>
+</body>
+</html>

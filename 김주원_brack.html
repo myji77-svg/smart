@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="ko" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1000가지 ASMR 스튜디오 - 시각적 인터랙티브 터치</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter & Jua -->
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Jua', sans-serif;
+            background: linear-gradient(135deg, #fce7f3 0%, #e0e7ff 50%, #f3e8ff 100%);
+            min-height: 100vh;
+        }
+        .jua-font {
+            font-family: 'Jua', sans-serif;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        @keyframes pulse-soft {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .animate-pulse-soft {
+            animation: pulse-soft 2s infinite ease-in-out;
+        }
+        .interactive-object {
+            transition: transform 0.1s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.1s ease;
+            user-select: none;
+            cursor: pointer;
+        }
+        .interactive-object:active {
+            transform: scale(0.82) rotate(-3deg);
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col text-slate-700">
+
+    <header class="bg-white/85 backdrop-blur-md border-b border-pink-100 sticky top-0 z-50 px-4 py-3 shadow-sm">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pink-400 to-purple-500 flex items-center justify-center text-white shadow-md shadow-pink-200">
+                    <i class="fa-solid fa-hand-pointer text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="jua-font text-2xl bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">1000가지 ASMR 만지기 스튜디오</h1>
+                    <p class="text-xs text-slate-400">말랑이, 슬라임, 왁스퍼킹(왂뿌), 키캡, 팝잇 등 시각적 그래픽과 실감나는 소리</p>
+                </div>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="relative w-full sm:w-80">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </span>
+                <input type="text" id="searchInput" placeholder="말랑이, 슬라임, 왂뿌, 키캡, 팝잇 검색..." 
+                    class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-pink-400 focus:bg-white transition-all">
+            </div>
+
+            <div class="hidden md:flex items-center gap-4 text-xs font-medium text-slate-500 bg-pink-50/60 px-4 py-2 rounded-full border border-pink-100">
+                <span><i class="fa-solid fa-sparkles text-pink-400 mr-1"></i> 총 <strong id="totalCount">1,000</strong>가지 ASMR 아이템</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Categories Filter Bar -->
+    <nav class="bg-white/50 backdrop-blur-sm border-b border-slate-100 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar" id="categoryContainer">
+            <button onclick="filterCategory('전체')" class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-pink-500 text-white shadow-sm shadow-pink-200 transition-all flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-star"></i> 전체 보기 (1000)
+            </button>
+            <button onclick="filterCategory('말랑이')" class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-slate-600 hover:bg-pink-50 border border-slate-200 transition-all flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-face-smile text-pink-400"></i> 말랑이
+            </button>
+            <button onclick="filterCategory('슬라임')" class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-slate-600 hover:bg-pink-50 border border-slate-200 transition-all flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-droplet text-blue-400"></i> 슬라임
+            </button>
+            <button onclick="filterCategory('왁스퍼킹')" class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-slate-600 hover:bg-pink-50 border border-slate-200 transition-all flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-scissors text-purple-400"></i> 왁스퍼킹(왂뿌)
+            </button>
+            <button onclick="filterCategory('키캡')" class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-slate-600 hover:bg-pink-50 border border-slate-200 transition-all flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-keyboard text-emerald-400"></i> 키캡
+            </button>
+            <button onclick="filterCategory('팝잇')" class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-slate-600 hover:bg-pink-50 border border-slate-200 transition-all flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-circle-dot text-amber-400"></i> 팝잇
+            </button>
+            <button onclick="filterCategory('비누자르기')" class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-slate-600 hover:bg-pink-50 border border-slate-200 transition-all flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-soap text-indigo-400"></i> 비누자르기
+            </button>
+            <button onclick="filterCategory('바삭소리')" class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-slate-600 hover:bg-pink-50 border border-slate-200 transition-all flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-cookie text-orange-400"></i> 바삭소리
+            </button>
+        </div>
+    </nav>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left 8 Columns: Interactive Touch Stage & Grid -->
+        <div class="lg:col-span-8 flex flex-col gap-6">
+            
+            <!-- Interactive Touch Stage Card -->
+            <div class="bg-white/90 backdrop-blur-md rounded-3xl p-6 border border-pink-100 shadow-xl relative overflow-hidden flex flex-col items-center justify-center min-h-[380px]">
+                <div class="absolute top-4 left-4 flex items-center gap-2">
+                    <span id="stageCategoryBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-pink-100 text-pink-600">
+                        <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> 시각적 인터랙티브 스테이지
+                    </span>
+                </div>
+                <div class="absolute top-4 right-4 text-xs text-slate-400 font-mono" id="stageItemId">#1</div>
+
+                <!-- Center Visual Interactive Object Container with Illustrated Graphics -->
+                <div class="my-6 text-center flex flex-col items-center">
+                    <div id="interactiveTouchObject" 
+                         onmousedown="triggerTouchInteraction()" 
+                         ontouchstart="triggerTouchInteraction()"
+                         class="interactive-object w-44 h-44 mx-auto mb-4 rounded-3xl shadow-2xl flex items-center justify-center relative cursor-pointer select-none">
+                        <!-- Dynamic Visual Asset -->
+                        <div id="visualAssetContainer" class="w-full h-full flex items-center justify-center">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+                    <h2 id="stageItemTitle" class="jua-font text-2xl text-slate-800 mb-1">모찌 동물 말랑이</h2>
+                    <p id="stageItemDesc" class="text-xs text-slate-400 max-w-md">아래 오브젝트를 클릭하거나 터치하여 직접 만지작거려보세요! 모양이 찌그러지며 실감나는 소리가 재생됩니다.</p>
+                </div>
+
+                <!-- Touch Action Instructions -->
+                <div class="w-full bg-pink-50/80 rounded-2xl p-3 border border-pink-100 flex items-center justify-between text-xs text-slate-600">
+                    <span class="flex items-center gap-2">
+                        <i class="fa-solid fa-hand-pointer text-pink-500"></i> 
+                        <span>시각적인 그래픽 변화와 함께 <strong>고유 ASMR 사운드</strong>를 즐기세요!</span>
+                    </span>
+                    <button onclick="triggerTouchInteraction()" class="px-4 py-1.5 bg-pink-500 hover:bg-pink-600 text-white rounded-xl font-bold shadow-sm transition-all">
+                        <i class="fa-solid fa-hand mr-1"></i> 만지기!
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grid Header & Controls -->
+            <div class="flex items-center justify-between">
+                <h3 class="jua-font text-xl text-slate-700 flex items-center gap-2">
+                    <i class="fa-solid fa-list text-pink-500"></i> <span id="currentCategoryTitle">전체 ASMR 리스트</span>
+                    <span id="resultCount" class="text-xs font-normal text-slate-400 bg-white px-2.5 py-1 rounded-full border border-slate-200">1000개</span>
+                </h3>
+                <button onclick="playRandomASMR()" class="px-3 py-1.5 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl text-xs font-medium shadow-md shadow-pink-200 hover:opacity-90 transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-dice"></i> 랜덤 ASMR 소환
+                </button>
+            </div>
+
+            <!-- Grid of Cards -->
+            <div id="asmrGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-h-[46vh] overflow-y-auto pr-2">
+                <!-- Dynamically populated via JS -->
+            </div>
+        </div>
+
+        <!-- Right 4 Columns: Studio Mixer & Sound Customizer -->
+        <div class="lg:col-span-4 bg-white/90 backdrop-blur-md rounded-3xl p-5 border border-pink-100 shadow-xl flex flex-col justify-between gap-6 h-fit lg:sticky lg:top-24">
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="jua-font text-lg text-slate-700 flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-purple-500"></i> 사운드 & 볼륨 믹서
+                    </h3>
+                    <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
+                </div>
+
+                <div class="bg-gradient-to-br from-pink-50 to-purple-50 p-4 rounded-2xl border border-pink-100 mb-6">
+                    <!-- Volume & Controls -->
+                    <div class="space-y-4 text-left">
+                        <div>
+                            <div class="flex justify-between text-xs text-slate-500 mb-1">
+                                <span>마스터 볼륨</span>
+                                <span id="volumeValue">80%</span>
+                            </div>
+                            <input type="range" id="volumeSlider" min="0" max="100" value="80" 
+                                class="w-full accent-pink-500 cursor-pointer">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs text-slate-500 mb-1">
+                                <span>오토 터치(반복 모드)</span>
+                                <span id="loopStatus" class="text-pink-500 font-medium">켬</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="toggleLoop()" id="loopBtn" class="flex-1 py-2 bg-pink-500 text-white rounded-xl text-xs font-medium shadow-sm transition-all">오토 터치 켜짐</button>
+                                <button onclick="stopCurrentSound()" class="px-4 py-2 bg-slate-200 text-slate-600 rounded-xl text-xs font-medium hover:bg-slate-300 transition-all">정지</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Studio Ambient Sound Mixers -->
+                <div class="space-y-3">
+                    <h5 class="text-xs font-bold text-slate-400 uppercase tracking-wider">배경 앰비언스 사운드</h5>
+                    
+                    <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                        <div class="flex items-center gap-2 text-xs font-medium text-slate-600">
+                            <i class="fa-solid fa-cloud-rain text-blue-400"></i> 빗소리 백그라운드
+                        </div>
+                        <input type="range" id="rainAmbience" min="0" max="100" value="0" class="w-24 accent-blue-500 cursor-pointer" oninput="adjustAmbience('rain', this.value)">
+                    </div>
+
+                    <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                        <div class="flex items-center gap-2 text-xs font-medium text-slate-600">
+                            <i class="fa-solid fa-fire text-orange-400"></i> 장작 모닥불
+                        </div>
+                        <input type="range" id="fireAmbience" min="0" max="100" value="0" class="w-24 accent-orange-500 cursor-pointer" oninput="adjustAmbience('fire', this.value)">
+                    </div>
+
+                    <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                        <div class="flex items-center gap-2 text-xs font-medium text-slate-600">
+                            <i class="fa-solid fa-mug-hot text-amber-600"></i> 아늑한 카페 백색소음
+                        </div>
+                        <input type="range" id="cafeAmbience" min="0" max="100" value="0" class="w-24 accent-amber-500 cursor-pointer" oninput="adjustAmbience('cafe', this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center pt-3 border-t border-slate-100">
+                <p class="text-[11px] text-slate-400">1,000가지 ASMR 데이터와 고유 시각 그래픽으로 언제 어디서나 힐링을 누리세요.</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 1,000가지 ASMR 데이터 생성 로직
+        const categories = ['말랑이', '슬라임', '왁스퍼킹', '키캡', '팝잇', '비누자르기', '바삭소리'];
+        
+        const categoryIcons = {
+            '말랑이': 'fa-face-smile',
+            '슬라임': 'fa-droplet',
+            '왁스퍼킹': 'fa-scissors',
+            '키캡': 'fa-keyboard',
+            '팝잇': 'fa-circle-dot',
+            '비누자르기': 'fa-soap',
+            '바삭소리': 'fa-cookie'
+        };
+
+        const categoryColors = {
+            '말랑이': 'bg-pink-100 text-pink-500 border-pink-200',
+            '슬라임': 'bg-blue-100 text-blue-500 border-blue-200',
+            '왁스퍼킹': 'bg-purple-100 text-purple-500 border-purple-200',
+            '키캡': 'bg-emerald-100 text-emerald-500 border-emerald-200',
+            '팝잇': 'bg-amber-100 text-amber-500 border-amber-200',
+            '비누자르기': 'bg-indigo-100 text-indigo-500 border-indigo-200',
+            '바삭소리': 'bg-orange-100 text-orange-500 border-orange-200'
+        };
+
+        const adjectives = ['슈퍼', '울트라', '극상의', '말랑말랑', '쫀득쫀득', '바삭바삭', '사르르', '영롱한', '달콤한', '청량한', '딥슬립', '마성의', '힐링의', '팅글폭발', '도톰한', '촉촉한', '매끄러운', '아삭아삭', '보들보들', '폭신폭신'];
+        const subNames = {
+            '말랑이': ['모찌 동물', '고양이젤리', '복숭아 스퀴시', '햄스터 뱃살', '대왕 마시멜로', '푸딩 스퀴시', '오리 인형', '몽글이', '토끼 귀', '치즈 볼'],
+            '슬라임': ['클리어 슬라임', '버터 슬라임', '크런치 글리터', '지글리 버블', '진주 클라우드', '눈꽃 슬라임', '젤리 치즈', '샤벳 슬라임', '꿀타래 슬라임', '오일 누들'],
+            '왁스퍼킹': ['컬러풀 왁스', '글리터 왁스바', '크리스탈 왁스', '꿀벌 밀랍', '스파클링 왁스', '마블링 왁스', '네온 왁스커팅', '파스텔 왁스바', '오로라 왁스', '진주빛 왁스'],
+            '키캡': ['체리축 리니어', '갈축 타이핑', '청축 클릭음', '무접점 보글보글', '커스텀 황축', '흑축 로우피치', '소닉 저소음', '레트로 타자기', '알루미늄 하우징', '포론폼 타이핑'],
+            '팝잇': ['무지개 유니콘', '대왕 원형 팝잇', '하트 팝펫', '스퀘어 버블랩', '공룡 피젯', '미니 팝팝', '별모양 푸쉬팝', '네온 큐브', '팝핑 스타', '버블 뽁뽁이'],
+            '비누자르기': ['라벤더 마블 비누', '허브 오일 비누', '클래식 글리세린', '버블폼 비누', '컬러 레이어 비누', '꿀팩 비누', '장미향 솝', '민트 쿨솝', '진주 비누', '오트밀 비누'],
+            '바삭소리': ['허니콤 쿠키', '얼음 깨기', '마카롱 크런치', '달고나 뽑기', '초코 바크', '치킨너겟 크런치', '견과류 바', '젤리빈 이팅', '뻥튀기 바삭', '얼린 젤리']
+        };
+
+        let asmrDatabase = [];
+        let currentFilter = '전체';
+        let searchQuery = '';
+        let currentItem = {
+            id: 1,
+            title: '말랑말랑 모찌 동물 #1',
+            category: '말랑이',
+            views: 45000,
+            icon: 'fa-face-smile'
+        };
+
+        // Generate 1000 items
+        function generateASMRDatabase() {
+            let idCounter = 1;
+            for (let i = 0; i < 143; i++) {
+                categories.forEach(cat => {
+                    if (idCounter <= 1000) {
+                        const adj = adjectives[i % adjectives.length];
+                        const nameList = subNames[cat];
+                        const baseName = nameList[i % nameList.length];
+                        const title = `${adj} ${baseName} #${idCounter}`;
+                        
+                        asmrDatabase.push({
+                            id: idCounter,
+                            title: title,
+                            category: cat,
+                            views: Math.floor(Math.random() * 95000) + 1200,
+                            likes: Math.floor(Math.random() * 8500) + 120,
+                            icon: categoryIcons[cat],
+                            colorClass: categoryColors[cat]
+                        });
+                        idCounter++;
+                    }
+                });
+            }
+            while(asmrDatabase.length < 1000) {
+                let id = asmrDatabase.length + 1;
+                let cat = categories[id % categories.length];
+                asmrDatabase.push({
+                    id: id,
+                    title: `스페셜 힐링 ASMR #${id}`,
+                    category: cat,
+                    views: 50000,
+                    likes: 3000,
+                    icon: categoryIcons[cat],
+                    colorClass: categoryColors[cat]
+                });
+            }
+        }
+
+        generateASMRDatabase();
+
+        // Web Audio API State
+        let audioCtx = null;
+        let currentVolume = 0.8;
+        let isAutoTouching = true;
+        let autoTouchInterval = null;
+
+        function initAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Render Rich Illustrated Graphics & SVG Icons for each category on stage
+        function renderVisualAsset(category) {
+            const container = document.getElementById('visualAssetContainer');
+            const objBox = document.getElementById('interactiveTouchObject');
+
+            if (category === '말랑이') {
+                objBox.className = 'interactive-object w-44 h-44 mx-auto mb-4 rounded-full bg-gradient-to-tr from-pink-300 via-pink-400 to-rose-400 shadow-xl shadow-pink-300/50 flex items-center justify-center relative cursor-pointer select-none border-4 border-white';
+                container.innerHTML = `
+                    <div class="relative flex flex-col items-center justify-center text-white">
+                        <svg class="w-20 h-20 mb-1 drop-shadow-md animate-pulse-soft" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                        <span class="text-xs font-bold tracking-wider uppercase opacity-90 drop-shadow">모찌 스퀴시</span>
+                    </div>
+                `;
+            } else if (category === '슬라임') {
+                objBox.className = 'interactive-object w-44 h-44 mx-auto mb-4 rounded-[40%] bg-gradient-to-tr from-blue-400 via-cyan-300 to-indigo-400 shadow-xl shadow-blue-300/50 flex items-center justify-center relative cursor-pointer select-none border-4 border-white';
+                container.innerHTML = `
+                    <div class="relative flex flex-col items-center justify-center text-white">
+                        <svg class="w-20 h-20 mb-1 drop-shadow-md animate-bounce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/>
+                        </svg>
+                        <span class="text-xs font-bold tracking-wider uppercase opacity-90 drop-shadow">지글리 슬라임</span>
+                    </div>
+                `;
+            } else if (category === '왁스퍼킹') {
+                objBox.className = 'interactive-object w-44 h-44 mx-auto mb-4 rounded-2xl bg-gradient-to-tr from-purple-400 via-fuchsia-400 to-pink-500 shadow-xl shadow-purple-300/50 flex items-center justify-center relative cursor-pointer select-none border-4 border-white';
+                container.innerHTML = `
+                    <div class="relative flex flex-col items-center justify-center text-white">
+                        <svg class="w-20 h-20 mb-1 drop-shadow-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/>
+                        </svg>
+                        <span class="text-xs font-bold tracking-wider uppercase opacity-90 drop-shadow">왁스퍼킹 왂뿌</span>
+                    </div>
+                `;
+            } else if (category === '키캡') {
+                objBox.className = 'interactive-object w-44 h-44 mx-auto mb-4 rounded-xl bg-gradient-to-tr from-emerald-400 via-teal-500 to-cyan-600 shadow-xl shadow-emerald-300/50 flex items-center justify-center relative cursor-pointer select-none border-4 border-white';
+                container.innerHTML = `
+                    <div class="relative flex flex-col items-center justify-center text-white">
+                        <svg class="w-20 h-20 mb-1 drop-shadow-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/>
+                        </svg>
+                        <span class="text-xs font-bold tracking-wider uppercase opacity-90 drop-shadow">기계식 키캡</span>
+                    </div>
+                `;
+            } else if (category === '팝잇') {
+                objBox.className = 'interactive-object w-44 h-44 mx-auto mb-4 rounded-3xl bg-gradient-to-tr from-amber-300 via-orange-400 to-yellow-400 shadow-xl shadow-amber-300/50 flex items-center justify-center relative cursor-pointer select-none border-4 border-white';
+                container.innerHTML = `
+                    <div class="relative flex flex-col items-center justify-center text-white">
+                        <svg class="w-20 h-20 mb-1 drop-shadow-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <span class="text-xs font-bold tracking-wider uppercase opacity-90 drop-shadow">팝잇 뽁뽁이</span>
+                    </div>
+                `;
+            } else if (category === '비누자르기') {
+                objBox.className = 'interactive-object w-44 h-44 mx-auto mb-4 rounded-2xl bg-gradient-to-tr from-indigo-300 via-indigo-400 to-violet-500 shadow-xl shadow-indigo-300/50 flex items-center justify-center relative cursor-pointer select-none border-4 border-white';
+                container.innerHTML = `
+                    <div class="relative flex flex-col items-center justify-center text-white">
+                        <svg class="w-20 h-20 mb-1 drop-shadow-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                        <span class="text-xs font-bold tracking-wider uppercase opacity-90 drop-shadow">비누 자르기</span>
+                    </div>
+                `;
+            } else {
+                objBox.className = 'interactive-object w-44 h-44 mx-auto mb-4 rounded-3xl bg-gradient-to-tr from-orange-400 via-amber-500 to-yellow-500 shadow-xl shadow-orange-300/50 flex items-center justify-center relative cursor-pointer select-none border-4 border-white';
+                container.innerHTML = `
+                    <div class="relative flex flex-col items-center justify-center text-white">
+                        <svg class="w-20 h-20 mb-1 drop-shadow-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+                        </svg>
+                        <span class="text-xs font-bold tracking-wider uppercase opacity-90 drop-shadow">바삭 이팅</span>
+                    </div>
+                `;
+            }
+        }
+
+        // Select and Load Item to Stage
+        function selectItem(item) {
+            currentItem = item;
+            document.getElementById('stageItemId').innerText = `#${item.id}`;
+            document.getElementById('stageItemTitle').innerText = item.title;
+            document.getElementById('stageCategoryBadge').innerHTML = `<i class="fa-solid ${item.icon} mr-1"></i> ${item.category} 스튜디오`;
+            document.getElementById('stageItemDesc').innerText = `${item.category} 카테고리의 고유 ASMR 아이템입니다. 일러스트 아이콘을 직접 터치하거나 만져보세요!`;
+            
+            renderVisualAsset(item.category);
+            triggerTouchInteraction();
+        }
+
+        // Trigger Tactile & Sound Interaction
+        function triggerTouchInteraction() {
+            initAudioContext();
+            
+            const obj = document.getElementById('interactiveTouchObject');
+            obj.style.transform = 'scale(0.80) rotate(' + (Math.random() * 10 - 5) + 'deg)';
+            setTimeout(() => {
+                obj.style.transform = 'scale(1) rotate(0deg)';
+            }, 130);
+
+            playCategorySound(currentItem.category);
+        }
+
+        function playCategorySound(category) {
+            if (!audioCtx) return;
+
+            const now = audioCtx.currentTime;
+            const masterGain = audioCtx.createGain();
+            masterGain.gain.setValueAtTime(currentVolume, now);
+            masterGain.connect(audioCtx.destination);
+
+            if (category === '말랑이') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(130, now);
+                osc.frequency.exponentialRampToValueAtTime(320, now + 0.35);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.7);
+                
+                gain.gain.setValueAtTime(0.35, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.7);
+
+                osc.connect(gain);
+                gain.connect(masterGain);
+                osc.start(now);
+                osc.stop(now + 0.7);
+
+            } else if (category === '슬라임') {
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                        if (!audioCtx) return;
+                        const t = audioCtx.currentTime;
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(170 + Math.random() * 200, t);
+                        osc.frequency.exponentialRampToValueAtTime(60 + Math.random() * 40, t + 0.12);
+                        
+                        gain.gain.setValueAtTime(0.25, t);
+                        gain.gain.linearRampToValueAtTime(0.01, t + 0.12);
+
+                        osc.connect(gain);
+                        gain.connect(masterGain);
+                        osc.start(t);
+                        osc.stop(t + 0.12);
+                    }, i * 100);
+                }
+
+            } else if (category === '왁스퍼킹') {
+                const bufferSize = audioCtx.sampleRate * 0.18;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.value = 3200;
+                filter.Q.value = 5.0;
+
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.45, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(masterGain);
+                noise.start(now);
+
+            } else if (category === '키캡') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(750, now);
+                osc.frequency.exponentialRampToValueAtTime(130, now + 0.07);
+
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.07);
+
+                osc.connect(gain);
+                gain.connect(masterGain);
+                osc.start(now);
+                osc.stop(now + 0.07);
+
+            } else if (category === '팝잇') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(900, now + 0.06);
+
+                gain.gain.setValueAtTime(0.35, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.06);
+
+                osc.connect(gain);
+                gain.connect(masterGain);
+                osc.start(now);
+                osc.stop(now + 0.06);
+
+            } else if (category === '비누자르기') {
+                const bufferSize = audioCtx.sampleRate * 0.35;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * 0.6;
+                }
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 1300;
+
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(masterGain);
+                noise.start(now);
+
+            } else {
+                for (let i = 0; i < 4; i++) {
+                    setTimeout(() => {
+                        if (!audioCtx) return;
+                        const t = audioCtx.currentTime;
+                        const bufferSize = audioCtx.sampleRate * 0.04;
+                        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                        const data = buffer.getChannelData(0);
+                        for (let j = 0; j < bufferSize; j++) {
+                            data[j] = Math.random() * 2 - 1;
+                        }
+                        const noise = audioCtx.createBufferSource();
+                        noise.buffer = buffer;
+
+                        const filter = audioCtx.createBiquadFilter();
+                        filter.type = 'highpass';
+                        filter.frequency.value = 3500;
+
+                        const gain = audioCtx.createGain();
+                        gain.gain.setValueAtTime(0.35, t);
+                        gain.gain.linearRampToValueAtTime(0.01, t + 0.04);
+
+                        noise.connect(filter);
+                        filter.connect(gain);
+                        gain.connect(masterGain);
+                        noise.start(t);
+                    }, i * 50);
+                }
+            }
+        }
+
+        function stopCurrentSound() {
+            if (autoTouchInterval) {
+                clearInterval(autoTouchInterval);
+                autoTouchInterval = null;
+            }
+            isAutoTouching = false;
+            document.getElementById('loopBtn').innerText = '오토 터치 꺼짐';
+            document.getElementById('loopBtn').className = 'flex-1 py-2 bg-slate-200 text-slate-600 rounded-xl text-xs font-medium transition-all';
+            document.getElementById('loopStatus').innerText = '끔';
+        }
+
+        function toggleLoop() {
+            isAutoTouching = !isAutoTouching;
+            const btn = document.getElementById('loopBtn');
+            const status = document.getElementById('loopStatus');
+            if (isAutoTouching) {
+                btn.innerText = '오토 터치 켜짐';
+                btn.className = 'flex-1 py-2 bg-pink-500 text-white rounded-xl text-xs font-medium shadow-sm transition-all';
+                status.innerText = '켬';
+                startAutoTouchLoop();
+            } else {
+                btn.innerText = '오토 터치 꺼짐';
+                btn.className = 'flex-1 py-2 bg-slate-200 text-slate-600 rounded-xl text-xs font-medium transition-all';
+                status.innerText = '끔';
+                if (autoTouchInterval) {
+                    clearInterval(autoTouchInterval);
+                    autoTouchInterval = null;
+                }
+            }
+        }
+
+        function startAutoTouchLoop() {
+            if (autoTouchInterval) clearInterval(autoTouchInterval);
+            autoTouchInterval = setInterval(() => {
+                if (isAutoTouching) {
+                    triggerTouchInteraction();
+                }
+            }, 1800);
+        }
+
+        startAutoTouchLoop();
+
+        document.getElementById('volumeSlider').addEventListener('input', (e) => {
+            currentVolume = e.target.value / 100;
+            document.getElementById('volumeValue').innerText = `${e.target.value}%`;
+        });
+
+        // Render ASMR Cards Grid
+        function renderGrid(itemsToDisplay) {
+            const grid = document.getElementById('asmrGrid');
+            document.getElementById('resultCount').innerText = `${itemsToDisplay.length}개`;
+            
+            if (itemsToDisplay.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full py-12 text-center text-slate-400">
+                        <i class="fa-solid fa-face-sad-tear text-4xl mb-3 text-pink-300"></i>
+                        <p class="jua-font text-lg">검색 결과가 없습니다.</p>
+                        <p class="text-xs mt-1">다른 키워드나 카테고리를 선택해보세요!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            itemsToDisplay.slice(0, 150).forEach(item => {
+                html += `
+                    <div onclick="selectItem(${JSON.stringify(item).replace(/"/g, '&quot;')})" 
+                        class="bg-white/90 backdrop-blur-sm p-4 rounded-2xl border border-pink-100 shadow-sm hover:shadow-md hover:border-pink-300 transition-all cursor-pointer flex flex-col justify-between group">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="px-2.5 py-1 rounded-full text-xs font-medium ${item.colorClass}">
+                                    <i class="fa-solid ${item.icon} mr-1"></i> ${item.category}
+                                </span>
+                                <span class="text-[11px] text-slate-400 font-mono">#${item.id}</span>
+                            </div>
+                            <h4 class="jua-font text-base text-slate-800 group-hover:text-pink-500 transition-colors line-clamp-1">${item.title}</h4>
+                        </div>
+                        <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 text-xs text-slate-400">
+                            <span class="flex items-center gap-1"><i class="fa-regular fa-eye"></i> ${(item.views / 1000).toFixed(1)}k</span>
+                            <span class="flex items-center gap-1 text-pink-500 font-bold"><i class="fa-solid fa-hand-pointer"></i> 만지기</span>
+                        </div>
+                    </div>
+                `;
+            });
+            grid.innerHTML = html;
+        }
+
+        // Filter by Category
+        function filterCategory(category) {
+            currentFilter = category;
+            
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                if (btn.innerText.includes(category)) {
+                    btn.className = 'category-btn px-4 py-2 rounded-full text-sm font-medium bg-pink-500 text-white shadow-sm shadow-pink-200 transition-all flex items-center gap-2 whitespace-nowrap';
+                } else {
+                    btn.className = 'category-btn px-4 py-2 rounded-full text-sm font-medium bg-white text-slate-600 hover:bg-pink-50 border border-slate-200 transition-all flex items-center gap-2 whitespace-nowrap';
+                }
+            });
+
+            document.getElementById('currentCategoryTitle').innerText = category === '전체' ? '전체 ASMR 리스트' : `${category} ASMR 리스트`;
+            applyFilters();
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            searchQuery = e.target.value.toLowerCase().trim();
+            applyFilters();
+        });
+
+        function applyFilters() {
+            let filtered = asmrDatabase;
+            
+            if (currentFilter !== '전체') {
+                filtered = filtered.filter(item => item.category === currentFilter);
+            }
+
+            if (searchQuery !== '') {
+                filtered = filtered.filter(item => 
+                    item.title.toLowerCase().includes(searchQuery) || 
+                    item.category.toLowerCase().includes(searchQuery)
+                );
+            }
+
+            renderGrid(filtered);
+        }
+
+        function playRandomASMR() {
+            const randomIndex = Math.floor(Math.random() * asmrDatabase.length);
+            selectItem(asmrDatabase[randomIndex]);
+        }
+
+        function adjustAmbience(type, val) {
+            initAudioContext();
+        }
+
+        // Initial render
+        renderGrid(asmrDatabase);
+        selectItem(asmrDatabase[0]);
+    </script>
+</body>
+</html>
