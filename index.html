@@ -1,62 +1,78 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>학생 바이브 코딩 작품 모음</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      max-width: 900px;
-      margin: 50px auto;
-      padding: 0 20px;
-      background: #f5f7fb;
-      color: #1f2937;
-    }
-    .student {
-      background: white;
-      padding: 24px;
-      margin: 20px 0;
-      border-radius: 16px;
-    }
-    .links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    a {
-      display: inline-block;
-      padding: 12px 16px;
-      border-radius: 8px;
-      background: #2457d6;
-      color: white;
-      text-decoration: none;
-    }
-    a:hover {
-      background: #183e9e;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>나만의 앱·게임 만들기 | 스마트양천미래교육센터</title>
+<style>
+:root{color-scheme:dark;--ink:#f6f5ff;--muted:#bdc1dc}*{box-sizing:border-box}body{margin:0;font-family:"Pretendard","맑은 고딕",sans-serif;color:var(--ink);background:#0e142a;background-image:radial-gradient(ellipse at 8% 0%,#342758 0%,transparent 48%),radial-gradient(ellipse at 100% 100%,#153c4d 0%,transparent 48%);min-height:100svh}.page{width:min(1240px,94%);min-height:100svh;margin:auto;display:flex;flex-direction:column;padding:24px 0 18px}header{display:flex;justify-content:space-between;gap:16px;align-items:center}.brand{font-size:15px;font-weight:700;letter-spacing:-.4px}.badge{border:1px solid #ffffff28;border-radius:30px;padding:7px 13px;color:#c8c0ff;font-size:12px}.hero{text-align:center;padding:26px 0 24px}.eyebrow{font-size:11px;letter-spacing:3px;color:#a9a4ec;margin:0 0 10px}h1{font-size:clamp(26px,3.1vw,42px);letter-spacing:-1.8px;margin:0 0 10px;line-height:1.3}h1 span{background:linear-gradient(90deg,#b7a1ff,#83e5e6);background-clip:text;-webkit-text-fill-color:transparent}.intro{font-size:14px;margin:0;color:var(--muted);line-height:1.6}.gallery{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;flex:1;align-content:center}.card{position:relative;text-align:center;display:flex;flex-direction:column;align-items:center;text-decoration:none;color:inherit;background:linear-gradient(145deg,#ffffff0d,#ffffff04);border:1px solid #ffffff19;border-radius:20px;padding:18px 12px 14px;transition:transform .2s,border-color .2s,background .2s;min-width:0}.card:hover{transform:translateY(-5px);border-color:var(--accent);background:#ffffff10}.card:focus-visible{outline:3px solid #93e9ff;outline-offset:4px}.number{position:absolute;left:13px;top:12px;font-size:10px;letter-spacing:1px;color:#a3aac4}.arrow{position:absolute;right:13px;top:10px;color:#a3aac4;font-size:16px}.icon{width:clamp(66px,8.5vw,112px);aspect-ratio:1;position:relative;display:grid;place-items:center;border-radius:25%;background:var(--tile);margin:6px 0 14px;box-shadow:0 8px 24px #0003;overflow:hidden}.icon img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:white}.fallback{font-size:clamp(34px,4.3vw,56px)}.title{font-size:16px;font-weight:800;letter-spacing:-.5px;overflow-wrap:anywhere;line-height:1.25;margin:0 0 7px}.name{color:var(--muted);font-size:12px}.launch{font-size:10px;color:var(--accent);margin-top:12px;letter-spacing:.4px}footer{display:flex;justify-content:space-between;gap:12px;color:#979fbf;font-size:11px;padding-top:24px;line-height:1.6}.dot{display:inline-block;width:6px;height:6px;background:#8de5d0;border-radius:50%;margin-right:6px}@media(min-width:900px) and (max-height:740px){.page{padding-top:16px}.hero{padding:16px 0}.card{padding:12px 10px}.icon{width:82px;margin-bottom:10px}.gallery{gap:12px}.launch{margin-top:8px}footer{padding-top:14px}}@media(max-width:899px){.gallery{grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.card{padding:18px 6px 12px}.title{font-size:13px}.icon{width:64px}.fallback{font-size:34px}.hero{padding:24px 0}.brand{font-size:13px}.badge{font-size:10px}}@media(max-width:600px){.page{width:92%;padding-top:18px}.gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.icon{width:76px}.title{font-size:15px}.hero{padding:26px 0}.eyebrow{letter-spacing:2px;font-size:9px}.intro{font-size:12px}h1{font-size:27px;letter-spacing:-1px}footer{display:block;text-align:center}.badge{padding:6px 9px}.brand{max-width:190px;line-height:1.5}}@media(prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
+
+/* 밝은 파스텔 전시 테마 */
+:root{color-scheme:light;--ink:#28324d;--muted:#65718a}
+body{background:#f7f8ff;background-image:radial-gradient(ellipse at 8% 0%,#e9e0ff 0%,transparent 48%),radial-gradient(ellipse at 100% 100%,#dff5f2 0%,transparent 48%)}
+.badge{background:#ffffffb3;border-color:#d8d4ef;color:#675398}
+.eyebrow{color:#7967ac}h1 span{background-image:linear-gradient(90deg,#7950c9,#168a94)}
+.card{background:linear-gradient(145deg,#ffffffed,#ffffffb3);border-color:#e0e4f0;box-shadow:0 5px 20px #6773a40c}
+.card:hover{background:#fff;border-color:#a79ad8;box-shadow:0 10px 25px #6773a41a}
+.number,.arrow{color:#8a92a9}.launch{color:#6655a4}
+footer{color:#69758f}.dot{background:#2b9f8d}
+
+/* 따뜻한 크리에이터 전시 보드 */
+:root{color-scheme:light;--ink:#342f2a;--muted:#766b60}
+body{background-color:#fff9ed;background-image:radial-gradient(#dacdb8 1px,transparent 1px);background-size:22px 22px}
+.page{width:min(1220px,94%)}
+.brand{color:#584738}.badge{background:#fff1bb;color:#785319;border:1px solid #e8ce79;border-radius:8px;font-weight:700}
+.hero{position:relative;padding:25px 0 23px}.eyebrow{display:inline-block;letter-spacing:1px;color:#705a40;background:#ffedb4;padding:6px 16px;border-radius:5px;transform:rotate(-2deg);font-weight:700}
+h1{color:#342f2a;font-weight:900}h1 span{background:none;-webkit-text-fill-color:initial;color:#e26e43}
+.intro{color:#7c6b58}
+.gallery{gap:18px}
+.card{border:2px solid var(--accent);border-radius:13px;background:#fffefb;box-shadow:4px 5px 0 var(--accent);padding-top:20px}
+.card:nth-child(odd){transform:rotate(-1deg)}.card:nth-child(even){transform:rotate(1deg)}
+.card:hover{background:#fff;border-color:var(--accent);transform:translateY(-5px);box-shadow:5px 9px 0 var(--accent)}
+.icon{border-radius:22px;border:2px solid #ffffff90;box-shadow:0 5px 12px #50382115}
+.number{color:#9a8068;font-weight:800}.arrow{color:#a4876e}.title{color:#3d352d}.name{color:#8b7561;background:#f8f0e3;border-radius:20px;padding:4px 12px}.launch{color:#a2653c;font-weight:700}
+footer{color:#8d7962}.dot{background:#e08b56}
+@media(max-width:899px){.gallery{gap:12px}.card{padding-left:5px;padding-right:5px}.hero{padding:20px 0}.name{padding:3px 8px}}
+@media(max-width:600px){.hero{padding:25px 0}.gallery{gap:16px}.card:nth-child(n){transform:none}.card:hover{transform:translateY(-3px)}}
+@media(prefers-reduced-motion:reduce){.card:hover{transform:none}}
+</style>
 </head>
 <body>
-  <h1>학생 바이브 코딩 작품 모음</h1>
-  <p>학생별 기획서와 주요기능을 살펴보고 프로그램을 실행해 보세요.</p>
-
-  <section class="student">
-    <h2>구민채</h2>
-    <div class="links">
-      <a href="./s01/plan.pdf">기획서</a>
-      <a href="./s01/features.html">주요기능 설명</a>
-      <a href="./s01/app/index.html">프로그램 실행하기</a>
-    </div>
-  </section>
-
-  <section class="student">
-    <h2>이서연</h2>
-    <div class="links">
-      <a href="./s02/plan.html">기획서</a>
-      <a href="./s02/features.html">주요기능 설명</a>
-      <a href="./s02/app/index.html">프로그램 실행하기</a>
-    </div>
-  </section>
+<main class="page">
+<header><div class="brand">스마트양천미래교육센터</div><div class="badge">학생 작품 전시회 · 10 PROJECTS</div></header>
+<section class="hero" aria-labelledby="heading"><p class="eyebrow">우리의 상상이 작품으로!</p><h1>생성형 AI로<br><span>나만의 앱·게임 만들기</span></h1><p class="intro">우리의 상상이 작품이 되는 순간!<br>아이콘을 클릭하고 학생들이 만든 앱과 게임을 만나보세요.</p></section>
+<section id="gallery" class="gallery" aria-label="학생 작품 10개"></section>
+<footer><span><span class="dot"></span>작품을 선택하면 새 창 또는 새 탭에서 열립니다.</span><span>작은 아이디어에서 시작된, 우리만의 디지털 세상</span></footer>
+</main>
+<script>
+// index.html, 학생 아이콘 PNG, 프로젝트 HTML 파일을 같은 폴더에 넣으세요.
+// 실제 아이콘이 없으면 임시 그림이 표시됩니다.
+const projects=[
+{name:'구민채',title:'DrawingPeople',emoji:'🎨',color:'#c3a5ff',tile:'#493569'},
+{name:'김주원',title:'brack',emoji:'🧱',color:'#ffc594',tile:'#614137'},
+{name:'배이든',title:'일일달력',emoji:'📅',color:'#9bd9ff',tile:'#264d69'},
+{name:'윤하늘',title:'역사퀴즈런',emoji:'📜',color:'#ffda8e',tile:'#5c5035'},
+{name:'박선우',title:'반려동물지도',emoji:'🐾',color:'#a6e6bc',tile:'#31574e'},
+{name:'이주원',title:'반반마켓',emoji:'🛍️',color:'#ffb3c7',tile:'#613d55'},
+{name:'민하은',title:'리듬신발끈묶기',emoji:'👟',color:'#bcb8ff',tile:'#444367'},
+{name:'정이수',title:'스피드서바이벌',emoji:'⚡',color:'#ffcd88',tile:'#5a4230'},
+{name:'박지윤',title:'감성카페',emoji:'☕',color:'#e7c6a6',tile:'#514138'},
+{name:'손주환',title:'3D거리싸움',emoji:'🎮',color:'#8fe2e4',tile:'#28565f'}
+];
+const gallery=document.getElementById('gallery');
+projects.forEach((project,index)=>{
+const card=document.createElement('a');
+card.className='card';card.href=encodeURIComponent(project.title)+'.html';card.target='_blank';card.rel='noopener noreferrer';card.setAttribute('aria-label',project.name+'의 '+project.title+' 실행 (새 창)');card.style.setProperty('--accent',project.color);card.style.setProperty('--tile',project.tile);
+const number=document.createElement('span');number.className='number';number.textContent=String(index+1).padStart(2,'0');
+const arrow=document.createElement('span');arrow.className='arrow';arrow.textContent='↗';arrow.setAttribute('aria-hidden','true');
+const icon=document.createElement('div');icon.className='icon';
+const fallback=document.createElement('span');fallback.className='fallback';fallback.textContent=project.emoji;fallback.setAttribute('aria-hidden','true');icon.append(fallback);
+const img=document.createElement('img');img.alt=project.title+' 프로젝트 아이콘';img.src=encodeURIComponent(project.name+'_아이콘_'+project.title+'.png');img.addEventListener('error',()=>img.remove(),{once:true});icon.append(img);
+const title=document.createElement('h2');title.className='title';title.textContent=project.title;
+const name=document.createElement('span');name.className='name';name.textContent=project.name;
+const launch=document.createElement('span');launch.className='launch';launch.textContent='작품 만나보기 ↗';
+card.append(number,arrow,icon,title,name,launch);gallery.append(card);
+});
+</script>
 </body>
 </html>
