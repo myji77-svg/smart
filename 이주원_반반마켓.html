@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <!-- 운영 시 다른 Nominatim 호환 서버로 교체할 수 있습니다. -->
+    <meta name="geocoding-endpoint" content="https://nominatim.openstreetmap.org/reverse">
     <title>반반마켓 - 1인 가구 식재료 소분 & 나눔</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -356,6 +359,7 @@
         <!-- MODALS & OVERLAYS -->
         <!-- ========================================================================= -->
 
+        <p class="text-[10px] text-slate-400 text-center mt-2">동네 주소: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" class="underline hover:text-brand-300">OpenStreetMap contributors</a> · <a href="https://operations.osmfoundation.org/policies/nominatim/" target="_blank" rel="noopener noreferrer" class="underline">Nominatim 이용 정책</a></p>
         <!-- 1. GPS / MANUAL LOCATION AUTH MODAL -->
         <div id="gpsModal" class="hidden absolute inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
             <div class="w-full max-h-[92vh] bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl overflow-y-auto">
@@ -382,6 +386,8 @@
                         <i class="fa-solid fa-satellite-dish"></i> GPS 위치 인증하기
                     </button>
                     <!-- Coordinate display for testing -->
+                    <p class="text-[10px] text-slate-400 text-center mt-2">동네 주소: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" class="underline hover:text-brand-300">OpenStreetMap contributors</a> · <a href="https://operations.osmfoundation.org/policies/nominatim/" target="_blank" rel="noopener noreferrer" class="underline">Nominatim 이용 정책</a></p>
+                    <p class="text-[10px] text-slate-400">GPS 실행 시 좌표를 주소 조회 서비스에 전송합니다. 주소가 다르면 수동으로 변경해주세요.</p>
                     <p id="gpsResultText" class="text-[10px] text-brand-300 hidden font-mono break-all"></p>
                 </div>
 
@@ -395,7 +401,7 @@
                 <div class="space-y-1.5">
                     <label class="text-[11px] font-bold text-slate-300">동네 이름 직접 검색</label>
                     <div class="flex gap-2">
-                        <input type="text" id="manualLocInput" placeholder="동 또는 구 이름을 입력하세요..." class="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-brand-500"/>
+                        <input type="text" onkeydown="if(event.key === 'Enter') searchManualLoc()" id="manualLocInput" placeholder="동 또는 구 이름을 입력하세요..." class="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-brand-500"/>
                         <button onclick="searchManualLoc()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs rounded-xl shrink-0 transition">
                             검색
                         </button>
@@ -703,7 +709,7 @@
                 btn.innerHTML = originalHTML;
                 btn.disabled = false;
                 showToast(`❌ ${errorMsg} (수동 검색을 이용해주세요)`);
-                setTimeout(openGpsModal, 1500); // 실패 시 수동 모달 띄워주기
+                switchToManualLocation(errorMsg);
             });
         }
 
@@ -731,46 +737,85 @@
                 btn.disabled = false;
                 anim.classList.add('hidden');
                 showToast(`❌ ${errorMsg}`);
+                switchToManualLocation(errorMsg);
             });
         }
 
-        // 공통 Geolocation 실행 함수
-        function executeGeolocation(onSuccess, onError) {
-            if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const lat = position.coords.latitude;
-                        const lon = position.coords.longitude;
-                        
-                        // [중요] 실제 상용 서비스 연동 방법:
-                        // 여기서 얻은 위경도(lat, lon)를 Kakao Maps API 또는 Naver Maps Reverse Geocoding API에 전송하여
-                        // 행정동 문자열을 받아와야 합니다.
-                        
-                        setTimeout(() => {
-                            const simulatedAddress = "내 위치 (GPS 연동됨)"; 
-                            onSuccess(simulatedAddress, lat, lon);
-                        }, 1200);
-                    },
-                    (error) => {
-                        // 권한 거부(1), 위치 사용 불가(2), 타임아웃(3) 등의 에러 발생 시
-                        let errorMsg = "GPS 위치를 가져올 수 없습니다.";
-                        if(error.code === 1) errorMsg = "위치 정보 접근 권한이 거부되었습니다.";
-                        
-                        // 프로토타입 UI 테스트를 위해 에러 발생 시 가상의 위치(양천구)로 강제 성공 처리
-                        showToast(`⚠️ ${errorMsg} (가상 위치로 테스트합니다)`);
-                        
-                        setTimeout(() => {
-                            // 에러가 났을 때 onError() 대신 가상 데이터를 onSuccess()로 넘겨 UI 흐름을 유지합니다.
-                            onSuccess("양천구 목동 (가상위치)", 37.5271, 126.8741);
-                        }, 1500);
-                    },
-                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-                );
-            } else {
-                showToast("⚠️ 이 브라우저에서는 GPS를 지원하지 않아 가상 위치로 테스트합니다.");
-                setTimeout(() => {
-                    onSuccess("양천구 목동 (가상위치)", 37.5271, 126.8741);
-                }, 1500);
+        // 사용자 버튼 클릭 때만 조회합니다. 자동완성·주기 조회는 하지 않습니다.
+        let gpsRequestPending = false;
+        let lastAddressRequest = 0;
+        const addressCache = new Map();
+
+        function switchToManualLocation(message) {
+            openGpsModal();
+            const result = document.getElementById('gpsResultText');
+            result.classList.remove('hidden');
+            result.innerText = `${message} 아래에서 동네 이름을 직접 입력해주세요.`;
+            document.getElementById('manualLocInput').focus();
+        }
+
+        function formatNeighborhood(address) {
+            const district = address.borough || address.city_district || address.county;
+            const neighborhood = address.quarter || address.neighbourhood || address.suburb || address.village || address.town;
+            const parts = [address.city || address.municipality || address.state, district, neighborhood];
+            return [...new Set(parts.filter(Boolean))].join(' ');
+        }
+
+        async function reverseGeocode(lat, lon) {
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error('좌표가 올바르지 않습니다.');
+            const key = `${lat.toFixed(4)},${lon.toFixed(4)}`;
+            if (addressCache.has(key)) return addressCache.get(key);
+            const delay = Math.max(0, 1100 - (Date.now() - lastAddressRequest));
+            if (delay) await new Promise(resolve => setTimeout(resolve, delay));
+            lastAddressRequest = Date.now();
+            const url = new URL(document.querySelector('meta[name="geocoding-endpoint"]').content);
+            url.search = new URLSearchParams({format: 'jsonv2', lat: String(lat), lon: String(lon), addressdetails: '1', zoom: '18', 'accept-language': 'ko'}).toString();
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 10000);
+            try {
+                const response = await fetch(url, {signal: controller.signal, referrerPolicy: 'strict-origin-when-cross-origin'});
+                if (!response.ok) throw new Error('주소 조회 서비스를 사용할 수 없습니다.');
+                const data = await response.json();
+                const name = formatNeighborhood(data.address || {});
+                if (data.error || !name) throw new Error('이 좌표의 동네 이름을 찾지 못했습니다.');
+                addressCache.set(key, name);
+                return name;
+            } finally {
+                clearTimeout(timer);
+            }
+        }
+
+        async function executeGeolocation(onSuccess, onError) {
+            if (gpsRequestPending) {
+                onError('이미 위치를 조회하고 있습니다. 잠시 후 다시 시도해주세요.');
+                return;
+            }
+            if (!window.isSecureContext || location.protocol === 'file:') {
+                onError('GPS는 GitHub Pages 등 HTTPS 웹페이지에서 이용해주세요.');
+                return;
+            }
+            if (!navigator.geolocation) {
+                onError('이 브라우저는 위치 조회를 지원하지 않습니다.');
+                return;
+            }
+            gpsRequestPending = true;
+            try {
+                const position = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(
+                    resolve, reject, {enableHighAccuracy: true, timeout: 15000, maximumAge: 60000}
+                ));
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                const name = await reverseGeocode(lat, lon);
+                onSuccess(name, lat, lon);
+            } catch (error) {
+                const messages = {
+                    1: '위치 정보 접근 권한이 거부되었습니다.',
+                    2: '현재 위치를 확인할 수 없습니다.',
+                    3: '위치 조회 시간이 초과되었습니다.'
+                };
+                onError(messages[error.code] || (error.name === 'AbortError' ? '동네 주소 조회 시간이 초과되었습니다.' : '동네 주소를 조회하지 못했습니다. 인터넷 연결을 확인해주세요.'));
+            } finally {
+                gpsRequestPending = false;
             }
         }
 
