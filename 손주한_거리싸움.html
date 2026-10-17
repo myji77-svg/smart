@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D 복싱 액션 게임: 스토리 모드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            user-select: none;
+            touch-action: manipulation;
+            overflow: hidden;
+            background-color: #000;
+            color: #fff;
+        }
+
+        .font-title {
+            font-family: 'Black Han Sans', sans-serif;
+        }
+
+        /* Hit & Damage Overlay Effects */
+        .hit-overlay {
+            animation: flashRed 0.25s ease-out;
+        }
+
+        @keyframes flashRed {
+            0% { background-color: rgba(220, 38, 38, 0.4); }
+            100% { background-color: transparent; }
+        }
+
+        /* Custom Scrollbar for Text Logs */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        /* Glowing Key Caps for Control Guide */
+        .key-cap {
+            background: linear-gradient(180deg, #374151 0%, #1f2937 100%);
+            border: 1px solid #4b5563;
+            box-shadow: 0 3px 0 #111827;
+            border-radius: 6px;
+            font-weight: 700;
+            padding: 2px 8px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body class="w-screen h-screen relative bg-slate-950 text-white flex flex-col justify-between">
+
+    <div id="game-container" class="absolute inset-0 w-full h-full z-0"></div>
+
+    <div id="hud-layer" class="relative z-10 w-full h-full flex flex-col justify-between p-4 pointer-events-none">
+        
+        <!-- Top Bar: Player Stats & Enemy Health -->
+        <div class="flex justify-between items-start w-full max-w-5xl mx-auto pointer-events-auto">
+            <!-- Player Stats -->
+            <div class="bg-slate-900/80 backdrop-blur-md p-4 rounded-xl border border-slate-700 w-72 shadow-xl">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="font-bold text-amber-400 flex items-center gap-2">
+                        <i class="fa-solid fa-user-ninja"></i> 나 (주인공)
+                    </span>
+                    <span id="player-level" class="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-mono">공격력 LV.1</span>
+                </div>
+                <div class="text-xs text-slate-400 mb-1 flex justify-between">
+                    <span>체력 (HP)</span>
+                    <span id="player-hp-text">100 / 100</span>
+                </div>
+                <div class="w-full bg-slate-700 h-3 rounded-full overflow-hidden mb-2">
+                    <div id="player-hp-bar" class="bg-gradient-to-r from-emerald-500 to-green-400 h-full w-full transition-all duration-200"></div>
+                </div>
+
+                <div class="text-xs text-slate-400 mb-1 flex justify-between">
+                    <span>스테미너</span>
+                    <span id="player-sp-text">100 / 100</span>
+                </div>
+                <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
+                    <div id="player-sp-bar" class="bg-sky-400 h-full w-full transition-all duration-100"></div>
+                </div>
+            </div>
+
+            <!-- Chapter Goal Header -->
+            <div id="quest-card" class="bg-slate-900/80 backdrop-blur-md px-6 py-3 rounded-xl border border-amber-500/30 text-center shadow-xl max-w-xs">
+                <div class="text-xs text-amber-400 font-semibold tracking-wider uppercase mb-1">현재 목표</div>
+                <div id="quest-text" class="text-sm font-bold text-slate-100">헬스장에서 운동하여 몸을 단련하세요!</div>
+            </div>
+
+            <!-- Enemy Health (Hidden by default) -->
+            <div id="enemy-stat-card" class="bg-slate-900/80 backdrop-blur-md p-4 rounded-xl border border-rose-700 w-72 shadow-xl opacity-0 transition-opacity duration-300">
+                <div class="flex justify-between items-center mb-1">
+                    <span id="enemy-name" class="font-bold text-rose-400 flex items-center gap-2">
+                        <i class="fa-solid fa-skull"></i> 라이벌 친구
+                    </span>
+                    <span id="enemy-tag" class="text-xs bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded font-mono font-bold">VS</span>
+                </div>
+                <div class="text-xs text-slate-400 mb-1 flex justify-between">
+                    <span>체력 (HP)</span>
+                    <span id="enemy-hp-text">100 / 100</span>
+                </div>
+                <div class="w-full bg-slate-700 h-3 rounded-full overflow-hidden">
+                    <div id="enemy-hp-bar" class="bg-gradient-to-r from-rose-600 to-red-400 h-full w-full transition-all duration-200"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Middle Screen Flash Effects -->
+        <div id="screen-overlay" class="absolute inset-0 pointer-events-none"></div>
+
+        <!-- Dialogue Box & Action Controls -->
+        <div class="w-full max-w-4xl mx-auto flex flex-col gap-3 pointer-events-auto">
+            
+            <!-- Dialogue System -->
+            <div id="dialogue-box" class="bg-slate-900/90 backdrop-blur-lg border-2 border-amber-500/50 p-4 rounded-2xl shadow-2xl flex flex-col gap-2 relative">
+                <div id="speaker-name" class="text-amber-400 font-bold text-sm font-title tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-comment-dots"></i> 스토리 진행 중...
+                </div>
+                <div id="dialogue-text" class="text-slate-200 text-base leading-relaxed min-h-[48px]">
+                    친구와의 한판 승부를 위해 먼저 헬스장에서 공격력과 체력을 키워야 한다!
+                </div>
+                <div class="flex justify-between items-center mt-1">
+                    <span class="text-xs text-slate-500">space / 클릭 시 계속</span>
+                    <button id="dialogue-btn" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-1.5 rounded-lg text-sm transition-all shadow-md active:scale-95">
+                        다음 <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Controls Guide Bar -->
+            <div class="bg-slate-900/80 backdrop-blur-md p-3 rounded-xl border border-slate-800 text-xs text-slate-300 flex flex-wrap justify-between items-center gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-amber-400 font-bold">이동:</span>
+                    <span>방향키 / WASD</span>
+                </div>
+                <div class="h-4 w-px bg-slate-700"></div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-amber-400 font-bold">기술:</span>
+                    <span><span class="key-cap">Q</span> 레프트 바디</span>
+                    <span><span class="key-cap">E</span> 라이트 바디</span>
+                    <span><span class="key-cap">R</span> 어퍼컷</span>
+                    <span><span class="key-cap">F</span> 더킹/위빙</span>
+                    <span><span class="key-cap">1</span> 레프트 훅</span>
+                    <span><span class="key-cap">2</span> 라이트 훅</span>
+                </div>
+            </div>
+
+            <!-- Mobile Touch Controls overlay (Visible on small screens) -->
+            <div class="md:hidden grid grid-cols-6 gap-1 bg-slate-900/90 p-2 rounded-xl text-center text-xs">
+                <button onclick="triggerSkill('Q')" class="bg-slate-800 p-2 rounded border border-slate-700 active:bg-amber-600">Q<br>L.바디</button>
+                <button onclick="triggerSkill('E')" class="bg-slate-800 p-2 rounded border border-slate-700 active:bg-amber-600">E<br>R.바디</button>
+                <button onclick="triggerSkill('R')" class="bg-slate-800 p-2 rounded border border-slate-700 active:bg-amber-600">R<br>어퍼</button>
+                <button onclick="triggerSkill('F')" class="bg-slate-800 p-2 rounded border border-slate-700 active:bg-amber-600">F<br>더킹</button>
+                <button onclick="triggerSkill('1')" class="bg-slate-800 p-2 rounded border border-slate-700 active:bg-amber-600">1<br>L.훅</button>
+                <button onclick="triggerSkill('2')" class="bg-slate-800 p-2 rounded border border-slate-700 active:bg-amber-600">2<br>R.훅</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="gym-ui" class="absolute inset-0 z-20 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border-2 border-amber-500/40 p-6 rounded-2xl max-w-md w-full text-center shadow-2xl flex flex-col gap-4">
+            <h2 class="text-2xl font-title text-amber-400 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-dumbbell"></i> 피트니스 체육관
+            </h2>
+            <p class="text-sm text-slate-300 leading-relaxed">
+                친와의 대결에 대비하여 몸을 단련하세요.<br>충분히 훈련하면 대결을 시작할 수 있습니다.
+            </p>
+
+            <div class="grid grid-cols-2 gap-3 my-2">
+                <button id="train-atk-btn" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 p-4 rounded-xl flex flex-col items-center gap-2 transition active:scale-95">
+                    <i class="fa-solid fa-dumbbell text-amber-400 text-3xl"></i>
+                    <span class="font-bold text-sm">벤치 프레스</span>
+                    <span class="text-xs text-amber-300">공격력 +5 (스테미너 소모)</span>
+                </button>
+                <button id="train-hp-btn" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 p-4 rounded-xl flex flex-col items-center gap-2 transition active:scale-95">
+                    <i class="fa-solid fa-person-running text-emerald-400 text-3xl"></i>
+                    <span class="font-bold text-sm">러닝 머신</span>
+                    <span class="text-xs text-emerald-300">최대 HP +20 (스테미너 소모)</span>
+                </button>
+            </div>
+
+            <div class="flex justify-between items-center text-xs text-slate-400 bg-slate-950/50 p-2 rounded-lg">
+                <span>단련 완료도: <span id="training-count" class="text-amber-400 font-bold">0</span>/5 회</span>
+                <span id="train-status" class="text-emerald-400">준비 완료!</span>
+            </div>
+
+            <button id="finish-training-btn" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                친구에게 도전하러 가기 <i class="fa-solid fa-flag-checkered"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+            }
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+            playPunch(type = 'normal') {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type === 'heavy' ? 'triangle' : 'sine';
+                
+                const freq = type === 'heavy' ? 80 : 140;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(10, this.ctx.currentTime + 0.15);
+                
+                gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+                
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.15);
+            }
+            playDodge() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(150, this.ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.1);
+            }
+        }
+        const sfx = new SoundFX();
+
+        const GameState = {
+            act: 1, // 1: Gym, 2: Friend Fight, 3: Gangster Ambush, 4: Arrest/Court, 5: Detention Secret Skill
+            player: {
+                hp: 100,
+                maxHp: 100,
+                sp: 100,
+                maxSp: 100,
+                atk: 12,
+                trainingCount: 0,
+                mesh: null,
+                isAttacking: false,
+                isDocking: false,
+                specialLearned: false
+            },
+            enemy: {
+                hp: 120,
+                maxHp: 120,
+                atk: 10,
+                mesh: null,
+                isAttacking: false,
+                type: 'friend' // friend, gangster, master
+            },
+            gangsters: [],
+            camera: null,
+            scene: null,
+            renderer: null,
+            keys: {},
+            dialogueIndex: 0
+        };
+
+        const Dialogues = {
+            act1: [
+                { speaker: "나 (주인공)", text: "친구 녀석이 오늘 복싱장에서 라이벌 대결을 하자고 했다. 무작정 갔다간 질 수도 있어." },
+                { speaker: "나 (주인공)", text: "우선 헬스기구를 이용해서 공격력과 근력을 먼저 키우자!" }
+            ],
+            act2: [
+                { speaker: "라이벌 친구", text: "왔냐? 오늘이야말로 누구 펀치가 더 매운지 겨뤄보자!" },
+                { speaker: "나 (주인공)", text: "좋아, 눈높이를 맞추고 정정당당하게 한판 붙어보자. (Q, E, R, F, 1, 2키로 공격)" }
+            ],
+            act3: [
+                { speaker: "동네 강패 두목", text: "이봐 어린 놈들, 여기서 무슨 시끄러운 소리냐? 돈 좀 가진 것 좀 내놔봐!" },
+                { speaker: "라이벌 친구", text: "갑자기 웬 강패들이야? 야 주인공, 일단 힘을 합쳐서 저 녀석들부터 물리치자!" }
+            ],
+            act4: [
+                { speaker: "경찰관", text: "거기 너희들 둘 다 손 들어! 폭행 및 집단 싸움 죄로 즉시 체포한다!" },
+                { speaker: "판사", text: "피고인들은 불법 싸움 및 소란을 피웠으므로, 소년원 단기 보호처분을 명합니다." },
+                { speaker: "나 (주인공)", text: "억울하지만... 결국 나와 친구는 소년원에 들어오게 되었다." }
+            ],
+            act5: [
+                { speaker: "소년원의 전설", text: "허허... 눈빛을 보니 기본 뼈대는 있구나. 내가 여기서 진짜 복싱 비기를 가르쳐주지." },
+                { speaker: "나 (주인공)", text: "이상한 아저씨지만 엄청난 포스가 느껴진다... 필살 어퍼컷 기술을 전수받았다! (공격력 대폭 상승)" }
+            ]
+        };
+
+        function init3D() {
+            const container = document.getElementById('game-container');
+            GameState.scene = new THREE.Scene();
+            GameState.scene.background = new THREE.Color(0x0a0f1d);
+            GameState.scene.fog = new THREE.FogExp2(0x0a0f1d, 0.03);
+
+            // Camera Setup matched to eye level
+            GameState.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            GameState.camera.position.set(0, 1.7, 3.5); // Eye level position (1.7m)
+
+            // Renderer Setup
+            GameState.renderer = new THREE.WebGLRenderer({ antialias: true });
+            GameState.renderer.setSize(window.innerWidth, window.innerHeight);
+            GameState.renderer.shadowMap.enabled = true;
+            GameState.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(GameState.renderer.domElement);
+
+            // Lighting Setup
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            GameState.scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xfffaed, 0.8);
+            dirLight.position.set(5, 12, 7);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 1024;
+            dirLight.shadow.mapSize.height = 1024;
+            GameState.scene.add(dirLight);
+
+            // Ring Floor & Environment Grid
+            createBoxingRing();
+
+            // Create Player Entity
+            GameState.player.mesh = createHumanoidCharacter(0x3b82f6, 'player'); // Blue shorts
+            GameState.player.mesh.position.set(0, 0, 0);
+            GameState.scene.add(GameState.player.mesh);
+
+            // Create Rival Enemy Entity (Same eye-level size)
+            GameState.enemy.mesh = createHumanoidCharacter(0xef4444, 'friend'); // Red shorts
+            GameState.enemy.mesh.position.set(0, 0, -2.2);
+            GameState.enemy.mesh.rotation.y = Math.PI;
+            GameState.scene.add(GameState.enemy.mesh);
+
+            // Resize Event
+            window.addEventListener('resize', onWindowResize, false);
+            
+            // Start Render Loop
+            animate();
+        }
+
+        function createHumanoidCharacter(pantsColorHex, tag) {
+            const group = new THREE.Group();
+
+            // Torso / Body
+            const bodyGeo = new THREE.CylinderGeometry(0.35, 0.28, 0.9, 12);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.5 }); // Skin
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 1.1;
+            body.castShadow = true;
+            group.add(body);
+
+            // Pants / Shorts
+            const pantsGeo = new THREE.CylinderGeometry(0.3, 0.32, 0.4, 12);
+            const pantsMat = new THREE.MeshStandardMaterial({ color: pantsColorHex, roughness: 0.3 });
+            const pants = new THREE.Mesh(pantsGeo, pantsMat);
+            pants.position.y = 0.65;
+            group.add(pants);
+
+            // Head (Eye-level set around 1.65m)
+            const headGeo = new THREE.SphereGeometry(0.22, 16, 16);
+            const headMat = new THREE.MeshStandardMaterial({ color: 0xd97706 });
+            const head = new THREE.Mesh(headGeo, headMat);
+            head.position.y = 1.65;
+            head.castShadow = true;
+            group.add(head);
+
+            // Boxing Gloves (Left & Right)
+            const gloveGeo = new THREE.SphereGeometry(0.13, 12, 12);
+            const gloveMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.2 });
+
+            const leftGlove = new THREE.Mesh(gloveGeo, gloveMat);
+            leftGlove.name = "leftGlove";
+            leftGlove.position.set(-0.35, 1.25, 0.35);
+            group.add(leftGlove);
+
+            const rightGlove = new THREE.Mesh(gloveGeo, gloveMat);
+            rightGlove.name = "rightGlove";
+            rightGlove.position.set(0.35, 1.25, 0.35);
+            group.add(rightGlove);
+
+            // Legs
+            const legGeo = new THREE.CylinderGeometry(0.1, 0.08, 0.6, 8);
+            const legMat = new THREE.MeshStandardMaterial({ color: 0xd97706 });
+            
+            const legL = new THREE.Mesh(legGeo, legMat);
+            legL.position.set(-0.16, 0.3, 0);
+            group.add(legL);
+
+            const legR = new THREE.Mesh(legGeo, legMat);
+            legR.position.set(0.16, 0.3, 0);
+            group.add(legR);
+
+            group.userData = { tag: tag };
+            return group;
+        }
+
+        function createBoxingRing() {
+            // Ring Mat Floor
+            const ringGeo = new THREE.BoxGeometry(8, 0.2, 8);
+            const ringMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.position.y = -0.1;
+            ring.receiveShadow = true;
+            GameState.scene.add(ring);
+
+            // Ring Ropes & Posts
+            const postGeo = new THREE.CylinderGeometry(0.08, 0.08, 2.2, 8);
+            const postMat = new THREE.MeshStandardMaterial({ color: 0xd97706 });
+
+            const positions = [
+                [-3.8, -3.8], [3.8, -3.8], [-3.8, 3.8], [3.8, 3.8]
+            ];
+
+            positions.forEach(pos => {
+                const post = new THREE.Mesh(postGeo, postMat);
+                post.position.set(pos[0], 1, pos[1]);
+                GameState.scene.add(post);
+            });
+        }
+
+        function setupGymUI() {
+            const gymUI = document.getElementById('gym-ui');
+            gymUI.classList.remove('hidden');
+
+            document.getElementById('train-atk-btn').onclick = () => {
+                sfx.init();
+                if (GameState.player.sp >= 20) {
+                    GameState.player.sp -= 20;
+                    GameState.player.atk += 5;
+                    GameState.player.trainingCount++;
+                    updateGymStats();
+                    sfx.playPunch('heavy');
+                }
+            };
+
+            document.getElementById('train-hp-btn').onclick = () => {
+                sfx.init();
+                if (GameState.player.sp >= 20) {
+                    GameState.player.sp -= 20;
+                    GameState.player.maxHp += 20;
+                    GameState.player.hp = GameState.player.maxHp;
+                    GameState.player.trainingCount++;
+                    updateGymStats();
+                    sfx.playDodge();
+                }
+            };
+
+            document.getElementById('finish-training-btn').onclick = () => {
+                gymUI.classList.add('hidden');
+                startNextAct();
+            };
+        }
+
+        function updateGymStats() {
+            document.getElementById('player-level').innerText = `공격력 LV.${Math.floor(GameState.player.atk / 5)}`;
+            document.getElementById('training-count').innerText = GameState.player.trainingCount;
+            updateHUD();
+
+            if (GameState.player.trainingCount >= 3) {
+                document.getElementById('train-status').innerText = "대결 준비 완료!";
+                document.getElementById('finish-training-btn').disabled = false;
+            }
+        }
+
+        function triggerSkill(key) {
+            if (GameState.player.isAttacking) return;
+            sfx.init();
+
+            const playerGroup = GameState.player.mesh;
+            const leftGlove = playerGroup.getObjectByName("leftGlove");
+            const rightGlove = playerGroup.getObjectByName("rightGlove");
+
+            let damage = GameState.player.atk;
+            let isHeavy = false;
+
+            GameState.player.isAttacking = true;
+
+            switch(key.toUpperCase()) {
+                case 'Q': // Left Body Blow
+                    animateGlove(leftGlove, { x: -0.2, y: 1.0, z: 0.9 }, 150, () => checkHit(damage));
+                    break;
+                case 'E': // Right Body Blow
+                    animateGlove(rightGlove, { x: 0.2, y: 1.0, z: 0.9 }, 150, () => checkHit(damage));
+                    break;
+                case 'R': // Uppercut
+                    damage *= 1.8;
+                    isHeavy = true;
+                    animateGlove(rightGlove, { x: 0.1, y: 1.6, z: 0.7 }, 200, () => checkHit(damage));
+                    break;
+                case 'F': // Ducking / Dodge
+                    sfx.playDodge();
+                    GameState.player.isDocking = true;
+                    playerGroup.position.y = -0.3;
+                    setTimeout(() => {
+                        playerGroup.position.y = 0;
+                        GameState.player.isDocking = false;
+                        GameState.player.isAttacking = false;
+                    }, 300);
+                    return;
+                case '1': // Left Hook
+                    damage *= 1.3;
+                    animateGlove(leftGlove, { x: 0.3, y: 1.3, z: 0.7 }, 180, () => checkHit(damage));
+                    break;
+                case '2': // Right Hook
+                    damage *= 1.3;
+                    animateGlove(rightGlove, { x: -0.3, y: 1.3, z: 0.7 }, 180, () => checkHit(damage));
+                    break;
+            }
+
+            sfx.playPunch(isHeavy ? 'heavy' : 'normal');
+        }
+
+        function animateGlove(glove, targetPos, duration, hitCallback) {
+            const originalPos = { x: glove.position.x, y: glove.position.y, z: glove.position.z };
+            
+            // Forward punch
+            glove.position.set(targetPos.x, targetPos.y, targetPos.z);
+            if (hitCallback) hitCallback();
+
+            // Retract
+            setTimeout(() => {
+                glove.position.set(originalPos.x, originalPos.y, originalPos.z);
+                GameState.player.isAttacking = false;
+            }, duration);
+        }
+
+        function checkHit(damage) {
+            const dist = GameState.player.mesh.position.distanceTo(GameState.enemy.mesh.position);
+            if (dist < 2.5) {
+                // Enemy receives damage
+                GameState.enemy.hp = Math.max(0, GameState.enemy.hp - damage);
+                flashDamageOverlay();
+                updateHUD();
+
+                // Knockback effect
+                GameState.enemy.mesh.position.z -= 0.15;
+
+                if (GameState.enemy.hp <= 0) {
+                    onEnemyDefeated();
+                }
+            }
+        }
+
+        function flashDamageOverlay() {
+            const overlay = document.getElementById('screen-overlay');
+            overlay.classList.add('hit-overlay');
+            setTimeout(() => overlay.classList.remove('hit-overlay'), 250);
+        }
+
+        function startNextAct() {
+            GameState.act++;
+            GameState.dialogueIndex = 0;
+
+            if (GameState.act === 2) {
+                // Act 2: Fight with Friend
+                document.getElementById('enemy-stat-card').classList.remove('opacity-0');
+                document.getElementById('quest-text').innerText = "라이벌 친구와 1대1 복싱 대결에서 승리하세요!";
+                showDialogue(Dialogues.act2);
+            } else if (GameState.act === 3) {
+                // Act 3: Gangster Ambush
+                document.getElementById('enemy-name').innerText = "동네 강패 두목";
+                GameState.enemy.hp = 180;
+                GameState.enemy.maxHp = 180;
+                GameState.enemy.atk = 14;
+                document.getElementById('quest-text').innerText = "친구와 힘을 합쳐 동네 강패들을 물리치세요!";
+                showDialogue(Dialogues.act3);
+            } else if (GameState.act === 4) {
+                // Act 4: Courtroom & Detention
+                document.getElementById('quest-text').innerText = "재판을 받고 소년원으로 이동합니다...";
+                showDialogue(Dialogues.act4);
+            } else if (GameState.act === 5) {
+                // Act 5: Training in Detention
+                document.getElementById('enemy-name').innerText = "소년원의 전설 고수";
+                GameState.enemy.hp = 250;
+                GameState.enemy.maxHp = 250;
+                GameState.player.atk += 25; // Mastery buff
+                document.getElementById('quest-text').innerText = "스승님의 비기를 전수받아 최종 시험을 치르세요!";
+                showDialogue(Dialogues.act5);
+            }
+            updateHUD();
+        }
+
+        function onEnemyDefeated() {
+            if (GameState.act === 2) {
+                showDialogue([{ speaker: "라이벌 친구", text: "크윽... 역시 헬스장에서 준비를 단단히 해왔구나! 너의 승리다!" }]);
+            } else if (GameState.act === 3) {
+                showDialogue([{ speaker: "동네 강패 두목", text: "으윽... 이 꼬맹이들이 이렇게 세다니! 일단 퇴각이다!" }]);
+            } else if (GameState.act === 5) {
+                showDialogue([{ speaker: "소년원의 전설", text: "훌륭하다! 넌 이제 복싱의 참된 정점을 깨달았다." }]);
+            }
+        }
+
+        function showDialogue(dialogueArray) {
+            const current = dialogueArray[GameState.dialogueIndex];
+            if (!current) {
+                document.getElementById('dialogue-box').classList.add('hidden');
+                if (GameState.act === 1) setupGymUI();
+                return;
+            }
+
+            document.getElementById('dialogue-box').classList.remove('hidden');
+            document.getElementById('speaker-name').innerText = current.speaker;
+            document.getElementById('dialogue-text').innerText = current.text;
+
+            document.getElementById('dialogue-btn').onclick = () => {
+                GameState.dialogueIndex++;
+                if (GameState.dialogueIndex < dialogueArray.length) {
+                    showDialogue(dialogueArray);
+                } else {
+                    document.getElementById('dialogue-box').classList.add('hidden');
+                    if (GameState.act === 1) setupGymUI();
+                    else if (GameState.act === 4) startNextAct();
+                }
+            };
+        }
+
+        function updateHUD() {
+            // Player HP
+            const playerHpPct = Math.max(0, (GameState.player.hp / GameState.player.maxHp) * 100);
+            document.getElementById('player-hp-bar').style.width = playerHpPct + '%';
+            document.getElementById('player-hp-text').innerText = `${Math.ceil(GameState.player.hp)} / ${GameState.player.maxHp}`;
+
+            // Player SP
+            const playerSpPct = Math.max(0, (GameState.player.sp / GameState.player.maxSp) * 100);
+            document.getElementById('player-sp-bar').style.width = playerSpPct + '%';
+            document.getElementById('player-sp-text').innerText = `${Math.ceil(GameState.player.sp)} / ${GameState.player.maxSp}`;
+
+            // Enemy HP
+            const enemyHpPct = Math.max(0, (GameState.enemy.hp / GameState.enemy.maxHp) * 100);
+            document.getElementById('enemy-hp-bar').style.width = enemyHpPct + '%';
+            document.getElementById('enemy-hp-text').innerText = `${Math.ceil(GameState.enemy.hp)} / ${GameState.enemy.maxHp}`;
+        }
+
+        window.addEventListener('keydown', (e) => {
+            GameState.keys[e.key.toLowerCase()] = true;
+
+            // Trigger Combat Keys
+            const keyUpper = e.key.toUpperCase();
+            if (['Q', 'E', 'R', 'F', '1', '2'].includes(keyUpper)) {
+                triggerSkill(keyUpper);
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            GameState.keys[e.key.toLowerCase()] = false;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Player Movement (Arrow Keys / WASD)
+            const speed = 0.06;
+            if (GameState.keys['arrowup'] || GameState.keys['w']) GameState.player.mesh.position.z -= speed;
+            if (GameState.keys['arrowdown'] || GameState.keys['s']) GameState.player.mesh.position.z += speed;
+            if (GameState.keys['arrowleft'] || GameState.keys['a']) GameState.player.mesh.position.x -= speed;
+            if (GameState.keys['arrowright'] || GameState.keys['d']) GameState.player.mesh.position.x += speed;
+
+            // Clamp Player within ring
+            GameState.player.mesh.position.x = Math.max(-3.5, Math.min(3.5, GameState.player.mesh.position.x));
+            GameState.player.mesh.position.z = Math.max(-3.5, Math.min(3.5, GameState.player.mesh.position.z));
+
+            // Camera follow eye-level behind player
+            GameState.camera.position.x = GameState.player.mesh.position.x;
+            GameState.camera.position.z = GameState.player.mesh.position.z + 3.2;
+            GameState.camera.lookAt(
+                GameState.enemy.mesh.position.x,
+                1.5,
+                GameState.enemy.mesh.position.z
+            );
+
+            // Enemy Simple AI Tracking
+            if (GameState.act >= 2 && GameState.enemy.hp > 0) {
+                const enemyMesh = GameState.enemy.mesh;
+                const dist = enemyMesh.position.distanceTo(GameState.player.mesh.position);
+
+                if (dist > 1.8) {
+                    // Walk toward player
+                    enemyMesh.position.x += (GameState.player.mesh.position.x - enemyMesh.position.x) * 0.02;
+                    enemyMesh.position.z += (GameState.player.mesh.position.z - enemyMesh.position.z) * 0.02;
+                } else if (Math.random() < 0.015 && !GameState.enemy.isAttacking) {
+                    // Enemy Random Counter-Attack
+                    GameState.enemy.isAttacking = true;
+                    if (!GameState.player.isDocking) {
+                        GameState.player.hp = Math.max(0, GameState.player.hp - GameState.enemy.atk);
+                        flashDamageOverlay();
+                        updateHUD();
+                    }
+                    setTimeout(() => GameState.enemy.isAttacking = false, 400);
+                }
+            }
+
+            // Stamina Regeneration
+            if (GameState.player.sp < GameState.player.maxSp) {
+                GameState.player.sp = Math.min(GameState.player.maxSp, GameState.player.sp + 0.1);
+                updateHUD();
+            }
+
+            GameState.renderer.render(GameState.scene, GameState.camera);
+        }
+
+        function onWindowResize() {
+            GameState.camera.aspect = window.innerWidth / window.innerHeight;
+            GameState.camera.updateProjectionMatrix();
+            GameState.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        window.onload = () => {
+            init3D();
+            showDialogue(Dialogues.act1);
+        };
+    </script>
+</body>
+</html>

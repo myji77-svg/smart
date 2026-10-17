@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>감성 카페</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font - Nanum Gothic & Gaegu -->
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nanum Gothic', sans-serif;
+            background-color: #f7f3ed;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .font-gaegu {
+            font-family: 'Gaegu', cursive;
+        }
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(-3%); }
+            50% { transform: translateY(3%); }
+        }
+        .animate-bounce-slow {
+            animation: bounce-slow 3s infinite ease-in-out;
+        }
+        @keyframes pulse-fast {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+        }
+        .animate-pulse-fast {
+            animation: pulse-fast 1s infinite ease-in-out;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1ebd9;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c5a880;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col justify-center items-center bg-stone-900 text-stone-800">
+
+    <!-- Game Container -->
+    <div id="game-container" class="relative w-full max-w-md h-full md:h-[92vh] md:max-h-[850px] md:rounded-3xl bg-[#FFFDF9] shadow-2xl overflow-hidden flex flex-col border-4 border-amber-900/20">
+
+        <!-- ASMR Web Audio Synthesizer Script -->
+        <script>
+            let audioCtx = null;
+
+            function initAudio() {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            }
+
+            const ASMR = {
+                ice: function() {
+                    if (!audioCtx) return;
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(1800 + Math.random() * 800, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.15);
+                },
+                pour: function() {
+                    if (!audioCtx) return;
+                    const bufferSize = audioCtx.sampleRate * 0.3;
+                    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+                    const noise = audioCtx.createBufferSource();
+                    noise.buffer = buffer;
+                    const filter = audioCtx.createBiquadFilter();
+                    filter.type = 'bandpass';
+                    filter.frequency.setValueAtTime(800 + Math.random() * 400, audioCtx.currentTime);
+                    filter.Q.value = 3;
+                    const gain = audioCtx.createGain();
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    noise.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    noise.start();
+                },
+                steam: function() {
+                    if (!audioCtx) return;
+                    const bufferSize = audioCtx.sampleRate * 0.5;
+                    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+                    const noise = audioCtx.createBufferSource();
+                    noise.buffer = buffer;
+                    const filter = audioCtx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(1200, audioCtx.currentTime);
+                    const gain = audioCtx.createGain();
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+                    noise.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    noise.start();
+                },
+                chime: function() {
+                    if (!audioCtx) return;
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(987.77, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(1318.51, audioCtx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.6);
+                },
+                magic: function() {
+                    if (!audioCtx) return;
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.15);
+                    osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.3);
+                    osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.45);
+                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.8);
+                },
+                tap: function() {
+                    if (!audioCtx) return;
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.05);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.05);
+                },
+                pop: function() {
+                    if (!audioCtx) return;
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(1000, audioCtx.currentTime + 0.08);
+                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.08);
+                }
+            };
+        </script>
+
+        <div id="screen-start" class="w-full h-full flex flex-col justify-between items-center p-6 bg-amber-50/60 relative overflow-hidden">
+            <div class="absolute -top-12 -left-12 w-40 h-40 bg-amber-200/40 rounded-full blur-xl"></div>
+            <div class="absolute -bottom-10 -right-10 w-48 h-48 bg-orange-200/40 rounded-full blur-xl"></div>
+
+            <div class="pt-8 flex flex-col items-center">
+                <div class="w-24 h-24 bg-gradient-to-tr from-amber-700 to-amber-500 rounded-full flex items-center justify-center shadow-lg relative animate-bounce-slow">
+                    <i class="fa-solid fa-headphones text-4xl text-amber-100"></i>
+                    <i class="fa-solid fa-mug-hot text-xl text-amber-200 absolute bottom-2 right-2"></i>
+                </div>
+                <h1 class="font-gaegu text-5xl font-bold text-amber-900 mt-4 tracking-wide">감성 카페</h1>
+                <p class="text-xs text-amber-700/80 mt-1 font-medium">감성 카페</p>
+            </div>
+
+            <div class="my-auto flex flex-col items-center text-center px-4">
+                <div class="bg-white/85 backdrop-blur-sm p-4 rounded-2xl shadow-sm border border-amber-100 max-w-xs mb-4">
+                    <p class="text-stone-600 text-sm leading-relaxed">
+                        ☕ 제한 시간 내에 손님의 주문 메뉴(1~3개)를 완벽히 만들고 제출하세요!<br>
+                        틀린 메뉴를 주거나 시간을 넘기면 인기도가 떨어집니다. 진상손님을 조심하세요!
+                    </p>
+                </div>
+            </div>
+
+            <div class="w-full space-y-3 pb-6 z-10">
+                <button onclick="startGame()" class="w-full py-4 bg-amber-800 hover:bg-amber-900 text-amber-50 font-bold text-lg rounded-2xl shadow-lg transform active:scale-95 transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-play"></i>
+                    <span>개업하기</span>
+                </button>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="toggleModal('modal-guide', true)" class="py-2.5 bg-white border border-amber-200 text-amber-800 font-semibold rounded-xl text-xs hover:bg-amber-50 flex items-center justify-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-book-open"></i>
+                        <span>게임 안내</span>
+                    </button>
+                    <button onclick="toggleModal('modal-recipe', true)" class="py-2.5 bg-white border border-amber-200 text-amber-800 font-semibold rounded-xl text-xs hover:bg-amber-50 flex items-center justify-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-mortar-pestle"></i>
+                        <span>요리 재료</span>
+                    </button>
+                </div>
+                <button onclick="toggleEndingsModal(true)" class="w-full mt-2 py-2.5 bg-white border border-amber-200 text-amber-800 font-semibold rounded-xl text-xs hover:bg-amber-50 flex items-center justify-center gap-1.5 shadow-sm transition active:scale-95">
+                    <i class="fa-solid fa-trophy"></i>
+                    <span>엔딩 도감</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="screen-main" class="hidden w-full h-full flex-col bg-[#FDFBF7] relative">
+            
+            <!-- Top Status Bar -->
+            <div class="w-full bg-amber-900/90 text-amber-50 p-3 flex items-center justify-between shadow-md z-20">
+                <div class="flex items-center gap-2">
+                    <span id="day-badge" class="bg-amber-100 text-amber-900 text-xs font-black px-2.5 py-1 rounded-full border border-amber-300">
+                        DAY 1
+                    </span>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] text-amber-200 font-semibold">인기도</span>
+                        <div class="w-16 bg-amber-950/60 h-2 rounded-full overflow-hidden border border-amber-700/50">
+                            <div id="popularity-bar" class="bg-emerald-400 h-full w-[60%] transition-all duration-500"></div>
+                        </div>
+                        <span id="popularity-text" class="text-[9px] text-amber-100/90 text-center mt-0.5 font-bold tracking-wider">20</span>
+                    </div>
+                </div>
+
+                <!-- Mystical Powder & Recipe Book Quick Button -->
+                <div class="flex items-center gap-2">
+                    <div class="flex flex-col items-center bg-purple-950/80 px-2 py-0.5 rounded-lg border border-purple-400/40">
+                        <span class="text-[9px] text-purple-200 font-semibold flex items-center gap-1">
+                            <i class="fa-solid fa-wand-magic-sparkles text-purple-300"></i> 신비가루
+                        </span>
+                        <span id="powder-status" class="text-[11px] font-bold text-purple-300">보유: 0개</span>
+                    </div>
+                    <button onclick="toggleModal('modal-recipe', true)" class="px-2.5 py-1 bg-amber-800 hover:bg-amber-700 text-amber-100 font-bold text-xs rounded-lg border border-amber-600 shadow-sm flex items-center gap-1">
+                        <i class="fa-solid fa-book-open"></i> 레시피 북
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <!-- Rating Stars -->
+                    <div class="flex flex-col items-end">
+                        <span class="text-[10px] text-amber-200 font-semibold">평점</span>
+                        <div class="flex text-amber-300 text-xs gap-0.5" id="rating-stars">
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                        </div>
+                    </div>
+                    <button onclick="toggleSoundEffect()" class="w-7 h-7 rounded-full bg-amber-800 flex items-center justify-center text-amber-200 hover:bg-amber-700">
+                        <i id="sound-icon" class="fa-solid fa-volume-high text-[10px]"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Timer Bar -->
+            <div class="w-full bg-stone-200 h-1.5 overflow-hidden">
+                <div id="customer-timer-bar" class="bg-amber-600 h-full w-full transition-all duration-1000 linear"></div>
+            </div>
+
+            <!-- Upper Area: Customer Section & Dialogue -->
+            <div class="relative flex-1 bg-gradient-to-b from-amber-100/60 to-stone-100 p-4 flex flex-col justify-between overflow-hidden">
+                
+                <!-- Customer Order Cloud Dialogue -->
+                <div id="customer-dialogue" class="relative z-10 bg-white/95 backdrop-blur-md p-3 rounded-2xl shadow-md border border-amber-200/80 transition-all duration-300">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span id="customer-name" class="font-bold text-xs text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">손님</span>
+                            <p id="customer-speech" class="text-xs text-stone-700 font-medium mt-1">"주문할게요!"</p>
+                        </div>
+                    </div>
+                    <!-- Multiple order tags -->
+                    <div class="mt-2 pt-2 border-t border-stone-100 flex flex-col gap-1.5" id="order-recipe-tags">
+                        <!-- Items rendered via JS -->
+                    </div>
+                </div>
+
+                <!-- Customer Visual Avatar -->
+                <div class="relative z-10 flex flex-col items-center my-auto">
+                    <div id="customer-avatar" class="w-24 h-24 rounded-full bg-amber-200/80 border-4 border-white shadow-lg flex items-center justify-center text-5xl transition-all duration-500 scale-95">
+                        👦
+                    </div>
+                    <div id="customer-mood" class="mt-1 bg-white/90 text-[11px] font-bold text-stone-600 px-3 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+                        <span>상태:</span> <span id="mood-text" class="text-emerald-600">주문 대기 중 ☕</span>
+                    </div>
+                </div>
+
+                <!-- Making Counter Area (Glass & Ingredients Drop Zone) -->
+                <div class="relative z-10 bg-white/90 rounded-2xl p-3 border border-stone-200 shadow-sm flex items-center justify-between">
+                    
+                    <div class="flex items-center gap-3">
+                        <div id="drink-cup" class="w-18 h-22 bg-stone-100/90 border-2 border-stone-300 rounded-b-2xl rounded-t-md relative overflow-hidden flex flex-col-reverse p-1 transition-all shadow-inner items-center justify-center text-3xl">
+                            <!-- Visual icon -->
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[10px] font-bold text-stone-500">현재 제조 중 (<span id="ingredient-count">0</span>/5):</span>
+                            <span id="drink-name" class="text-xs font-bold text-amber-900">빈 컵/접시</span>
+                            <div id="ingredient-stack" class="flex flex-wrap gap-1 mt-1 max-w-[130px]">
+                                <!-- Ingredients badges -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-1.5">
+                        <button onclick="serveOrder()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition active:scale-95 flex items-center gap-1">
+                            <i class="fa-solid fa-bell"></i>
+                            <span>메뉴 제출</span>
+                        </button>
+                        <button onclick="resetCup()" class="px-3 py-1 bg-stone-200 hover:bg-stone-300 text-stone-600 font-semibold text-[10px] rounded-xl transition active:scale-95 flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-rotate-left"></i>
+                            <span>다시 만들기</span>
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="bg-amber-900/10 p-3 border-t border-amber-900/10">
+                <div class="flex items-center justify-between mb-1.5">
+                    <p class="text-[10px] font-bold text-amber-900/70">
+                        <span><i class="fa-solid fa-hand-pointer mr-1"></i>정확한 재료 5개를 조합하세요</span>
+                    </p>
+                    <button id="btn-sprinkle" onclick="sprinkleMagicPowder()" class="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white text-[11px] font-bold rounded-lg shadow-md animate-pulse flex items-center gap-1">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> 신비가루 뿌리기 ✨
+                    </button>
+                </div>
+
+                <!-- Ingredients Grid -->
+                <div class="grid grid-cols-5 gap-1.5">
+                    <button onclick="addIngredient('ice')" class="bg-white hover:bg-amber-50 active:bg-amber-100 border border-amber-200 p-2 rounded-xl shadow-sm flex flex-col items-center gap-0.5 transition active:scale-90">
+                        <span class="text-lg">🧊</span>
+                        <span class="text-[10px] font-bold text-stone-700">얼음</span>
+                    </button>
+                    <button onclick="addIngredient('espresso')" class="bg-white hover:bg-amber-50 active:bg-amber-100 border border-amber-200 p-2 rounded-xl shadow-sm flex flex-col items-center gap-0.5 transition active:scale-90">
+                        <span class="text-lg">☕</span>
+                        <span class="text-[10px] font-bold text-stone-700">샷</span>
+                    </button>
+                    <button onclick="addIngredient('milk')" class="bg-white hover:bg-amber-50 active:bg-amber-100 border border-amber-200 p-2 rounded-xl shadow-sm flex flex-col items-center gap-0.5 transition active:scale-90">
+                        <span class="text-lg">🥛</span>
+                        <span class="text-[10px] font-bold text-stone-700">우유</span>
+                    </button>
+                    <button onclick="addIngredient('choco')" class="bg-white hover:bg-amber-50 active:bg-amber-100 border border-amber-200 p-2 rounded-xl shadow-sm flex flex-col items-center gap-0.5 transition active:scale-90">
+                        <span class="text-lg">🍫</span>
+                        <span class="text-[10px] font-bold text-stone-700">초코</span>
+                    </button>
+                    <button onclick="addIngredient('cream')" class="bg-white hover:bg-amber-50 active:bg-amber-100 border border-amber-200 p-2 rounded-xl shadow-sm flex flex-col items-center gap-0.5 transition active:scale-90">
+                        <span class="text-lg">☁️</span>
+                        <span class="text-[10px] font-bold text-stone-700">휘핑</span>
+                    </button>
+                    <button onclick="addIngredient('berry')" class="bg-white hover:bg-amber-50 active:bg-amber-100 border border-amber-200 p-2 rounded-xl shadow-sm flex flex-col items-center gap-0.5 transition active:scale-90">
+                        <span class="text-lg">🍓</span>
+                        <span class="text-[10px] font-bold text-stone-700">딸기</span>
+                    </button>
+                    <button onclick="addIngredient('carrot')" class="bg-white hover:bg-amber-50 active:bg-amber-100 border border-amber-200 p-2 rounded-xl shadow-sm flex flex-col items-center gap-0.5 transition active:scale-90">
+                        <span class="text-lg">🥕</span>
+                        <span class="text-[10px] font-bold text-stone-700">당근</span>
+                    </button>
+                    <button onclick="addIngredient('bread')" class="bg-white hover:bg-amber-50 active:bg-amber-100 border border-amber-200 p-2 rounded-xl shadow-sm flex flex-col items-center gap-0.5 transition active:scale-90">
+                        <span class="text-lg">🍞</span>
+                        <span class="text-[10px] font-bold text-stone-700">빵</span>
+                    </button>
+                    <button onclick="addIngredient('bake')" class="bg-white hover:bg-amber-50 active:bg-amber-100 border border-amber-200 p-2 rounded-xl shadow-sm flex flex-col items-center gap-0.5 transition active:scale-90 col-span-2">
+                        <span class="text-lg">🔥</span>
+                        <span class="text-[10px] font-bold text-stone-700">굽기</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bottom Progress Tracker -->
+            <div class="px-4 py-2 bg-white border-t border-stone-200 flex items-center justify-between text-xs text-stone-600">
+                <span>오늘의 손님: <strong id="customer-count" class="text-amber-800">1/5</strong></span>
+                <span class="text-[10px] text-stone-400">7일간의 영업을 완수하세요</span>
+            </div>
+
+        </div>
+
+        <!-- Result Screen -->
+        <div id="screen-result" class="hidden w-full h-full flex-col justify-between p-6 bg-stone-50 relative overflow-y-auto">
+            
+            <div class="text-center pt-6">
+                <span id="ending-badge" class="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full">영업 결과</span>
+                <h2 id="ending-title" class="font-gaegu text-4xl font-bold text-amber-900 mt-2">해피 엔딩</h2>
+                <p id="ending-subtitle" class="text-xs text-stone-500 mt-1">7일간의 카페 운영이 모두 완료되었습니다!</p>
+            </div>
+
+            <div class="my-6 flex flex-col items-center">
+                <div id="ending-illustration" class="w-40 h-40 rounded-3xl bg-amber-100 border-4 border-amber-300 flex items-center justify-center text-7xl shadow-lg my-2 transition-all">
+                    🏆
+                </div>
+                <div class="w-full bg-white p-4 rounded-2xl border border-amber-200 shadow-sm mt-4 space-y-2">
+                    <div class="flex justify-between text-xs text-stone-600">
+                        <span>최종 평점:</span>
+                        <span id="final-rating" class="font-bold text-amber-700">★ 4.8</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-stone-600">
+                        <span>최종 인기도:</span>
+                        <span id="final-popularity" class="font-bold text-emerald-600">92%</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-stone-600">
+                        <span>대접한 손님 수:</span>
+                        <span id="final-served" class="font-bold text-amber-800">38명</span>
+                    </div>
+                </div>
+
+                <div class="bg-amber-50/80 p-4 rounded-2xl border border-amber-200/80 mt-4 text-center">
+                    <p id="ending-story" class="text-xs text-stone-700 leading-relaxed font-medium">
+                        따뜻한 음료와 디저트로 많은 손님들에게 큰 힐링을 선사했습니다!
+                    </p>
+                </div>
+            </div>
+
+            <button onclick="restartGame()" class="w-full py-3.5 bg-amber-800 hover:bg-amber-900 text-amber-50 font-bold text-base rounded-2xl shadow-lg transition active:scale-95 mb-4">
+                <i class="fa-solid fa-rotate-right mr-1"></i> 카페 다시 열기
+            </button>
+        </div>
+
+        <!-- MODAL 1: GUIDE MODAL -->
+        <div id="modal-guide" class="hidden absolute inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-xl border border-amber-200 flex flex-col max-h-[80vh]">
+                <div class="flex justify-between items-center pb-2 border-b border-stone-100">
+                    <h3 class="font-bold text-amber-900 text-base flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-info text-amber-600"></i> 게임 안내 사항
+                    </h3>
+                    <button onclick="toggleModal('modal-guide', false)" class="text-stone-400 hover:text-stone-600 text-lg">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="py-3 text-xs text-stone-600 space-y-3 overflow-y-auto leading-relaxed">
+                    <p>☕ <strong>감성 카페 규칙:</strong></p>
+                    <ul class="list-disc pl-4 space-y-1.5">
+                        <li>손님들의 <strong>주문 메뉴(일반 1~3개, 진상 1~5개)</strong>를 각각 정확한 5개 재료 레시피로 만들어 제출하세요!</li>
+                        <li><strong>틀린 메뉴를 제출</strong>하거나 <strong>주문이 하나라도 틀리면</strong> 손님이 화를 내며 나가고 인기도가 크게 하락합니다.</li>
+                        <li>손님당 <strong>일반 1분 제한 시간</strong>이 있으며, 시간 초과 시 인기도가 하락합니다. 인기도가 0이 되면 새드 엔딩이 됩니다.</li>
+                        <li><strong>3일 차부터 진상 손님(⚠️)이 등장합니다!</strong> 30~40초만 기다리거나, 50% 확률로 10~20초 만에 휙 가버립니다.</li>
+                        <li>진상 손님의 제한 시간을 넘기면 <strong>20% 확률로 평점이 2점 하락 또는 인기도가 반토막</strong> 나는 치명적인 패널티를 받습니다.</li>
+                        <li>2일 차부터 </strong>신비로운 손님</strong>이 등장합니다! 무조건 신비가루를 주문 음식에 뿌려줘야 합니다.</li>
+                        <li>일자별 목표 손님 수(1일:2~3명, 2일:3~5명, 3일:4~6명, 4일:6~8명, 5일:8~10명, 6일:10~12명, 7일:15명)를 모두 채우면 영업이 완료됩니다.</li>
+                    </ul>
+                </div>
+                <button onclick="toggleModal('modal-guide', false)" class="w-full py-2.5 bg-amber-800 text-amber-50 font-bold text-xs rounded-xl mt-2">
+                    확인했습니다
+                </button>
+            </div>
+        </div>
+
+        <!-- MODAL 2: RECIPE BOOK MODAL -->
+        <div id="modal-recipe" class="hidden absolute inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-xl border border-amber-200 flex flex-col max-h-[80vh]">
+                <div class="flex justify-between items-center pb-2 border-b border-stone-100">
+                    <h3 class="font-bold text-amber-900 text-base flex items-center gap-1.5">
+                        <i class="fa-solid fa-book-open text-amber-600"></i> 메뉴 레시피 북 (정확히 각 5개 재료)
+                    </h3>
+                    <button onclick="toggleModal('modal-recipe', false)" class="text-stone-400 hover:text-stone-600 text-lg">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="py-3 text-xs text-stone-600 space-y-2.5 overflow-y-auto">
+                    <div class="p-2.5 bg-stone-50 rounded-xl border border-stone-200">
+                        <div class="font-bold text-amber-900 text-xs">🧊 아이스 아메리카노</div>
+                        <p class="text-[11px] text-stone-500 mt-0.5">샷, 샷, 샷, 얼음, 얼음</p>
+                    </div>
+                    <div class="p-2.5 bg-stone-50 rounded-xl border border-stone-200">
+                        <div class="font-bold text-amber-900 text-xs">🍫 초코 라떼</div>
+                        <p class="text-[11px] text-stone-500 mt-0.5">우유, 우유, 초코, 초코, 휘핑크림</p>
+                    </div>
+                    <div class="p-2.5 bg-stone-50 rounded-xl border border-stone-200">
+                        <div class="font-bold text-amber-900 text-xs">☕ 에스프레소</div>
+                        <p class="text-[11px] text-stone-500 mt-0.5">샷, 샷, 우유, 우유, 휘핑크림</p>
+                    </div>
+                    <div class="p-2.5 bg-stone-50 rounded-xl border border-stone-200">
+                        <div class="font-bold text-amber-900 text-xs">🍓 딸기 라떼</div>
+                        <p class="text-[11px] text-stone-500 mt-0.5">우유, 우유, 딸기, 딸기, 휘핑크림</p>
+                    </div>
+                    <div class="p-2.5 bg-amber-50 rounded-xl border border-amber-200">
+                        <div class="font-bold text-amber-900 text-xs">🥕 구운 당근 (디저트)</div>
+                        <p class="text-[11px] text-stone-500 mt-0.5">당근, 당근, 당근, 굽기, 굽기</p>
+                    </div>
+                    <div class="p-2.5 bg-amber-50 rounded-xl border border-amber-200">
+                        <div class="font-bold text-amber-900 text-xs">🎂 초코 케이크 (디저트)</div>
+                        <p class="text-[11px] text-stone-500 mt-0.5">초코, 초코, 빵, 빵, 초코</p>
+                    </div>
+                    <div class="p-2.5 bg-amber-50 rounded-xl border border-amber-200">
+                        <div class="font-bold text-amber-900 text-xs">🍰 딸기 케이크 (디저트)</div>
+                        <p class="text-[11px] text-stone-500 mt-0.5">딸기, 딸기, 빵, 빵, 휘핑크림</p>
+                    </div>
+                </div>
+                <button onclick="toggleModal('modal-recipe', false)" class="w-full py-2.5 bg-amber-800 text-amber-50 font-bold text-xs rounded-xl mt-2">
+                    닫기
+                </button>
+            </div>
+        </div>
+
+        <!-- MODAL 3: ENDINGS MODAL -->
+        <div id="modal-endings" class="hidden absolute inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-xl border border-amber-200 flex flex-col max-h-[80vh]">
+                <div class="flex justify-between items-center pb-2 border-b border-stone-100">
+                    <h3 class="font-bold text-amber-900 text-base flex items-center gap-1.5">
+                        <i class="fa-solid fa-trophy text-amber-600"></i> 수집한 엔딩 도감
+                    </h3>
+                    <button onclick="toggleEndingsModal(false)" class="text-stone-400 hover:text-stone-600 text-lg">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div id="endings-list" class="py-3 space-y-2.5 overflow-y-auto">
+                    <!-- Endings will be injected here -->
+                </div>
+                <button onclick="toggleEndingsModal(false)" class="w-full py-2.5 bg-amber-800 text-amber-50 font-bold text-xs rounded-xl mt-2">
+                    닫기
+                </button>
+            </div>
+        </div>
+
+        <div id="toast" class="hidden absolute top-14 left-1/2 -translate-x-1/2 bg-stone-800/90 text-white text-xs px-4 py-2 rounded-full shadow-lg z-50 pointer-events-none transition-all duration-300">
+            메시지 내용
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        window.unlockedEndings = window.unlockedEndings || [];
+
+        try {
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+            
+            if (firebaseConfig) {
+                const app = initializeApp(firebaseConfig);
+                const db = getFirestore(app);
+                const auth = getAuth(app);
+                let docRef = null;
+
+                window.saveEndingToCloud = async () => {
+                    if (!docRef) return;
+                    try {
+                        await setDoc(docRef, { unlocked: window.unlockedEndings }, { merge: true });
+                    } catch (e) {
+                        console.error("Firebase DB Save Error:", e);
+                    }
+                };
+
+                const initAuth = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                        
+                        const userId = auth.currentUser?.uid;
+                        if (userId) {
+                            docRef = doc(db, 'artifacts', appId, 'users', userId, 'playerData', 'endings');
+                            
+                            // 클라우드 데이터 불러오기 및 로컬과 병합
+                            const snap = await getDoc(docRef);
+                            if (snap.exists() && snap.data().unlocked) {
+                                const cloudEndings = snap.data().unlocked;
+                                cloudEndings.forEach(e => {
+                                    if (!window.unlockedEndings.includes(e)) window.unlockedEndings.push(e);
+                                });
+                                // 로컬에 임시 저장된 데이터가 클라우드보다 많다면 클라우드에 덮어쓰기
+                                if (window.unlockedEndings.length > cloudEndings.length) {
+                                    window.saveEndingToCloud();
+                                }
+                            }
+                            
+                            // 실시간 동기화 리스너 (엔딩이 업데이트되면 즉시 반영)
+                            onSnapshot(docRef, (docSnap) => {
+                                if (docSnap.exists() && docSnap.data().unlocked) {
+                                    const cloudEndings = docSnap.data().unlocked;
+                                    cloudEndings.forEach(e => {
+                                        if (!window.unlockedEndings.includes(e)) window.unlockedEndings.push(e);
+                                    });
+                                }
+                            }, (error) => console.error("Snapshot error:", error));
+                        }
+                    } catch (e) {
+                        console.error("Firebase Auth Error:", e);
+                    }
+                };
+
+                initAuth();
+            }
+        } catch (err) {
+            console.error("Firebase Setup Error:", err);
+        }
+    </script>
+
+    <script>
+        let state = {
+            day: 1,
+            maxDays: 7,
+            popularity: 20,
+            rating: 4.0,
+            customersToday: 0,
+            targetCustomersToday: 2,
+            rudeCustomersToday: 0,
+            targetRudeCustomersToday: 0,
+            mysticalCustomersToday: 0,
+            targetMysticalCustomersToday: 0,
+            totalMysticalSpawned: 0,
+            servedTotal: 0,
+            soundEnabled: true,
+            currentCustomer: null,
+            currentCup: [],
+            magicPowderCount: 0,
+            powderSprinkled: false,
+            mysticalServedCount: 0,
+            rudeFailCount: 0,
+            timerInterval: null,
+            timeLeft: 60,
+            maxTime: 60
+        };
+
+        const INGREDIENTS = {
+            ice: { name: '얼음', icon: '🧊', color: 'bg-blue-200', sound: () => ASMR.ice() },
+            espresso: { name: '샷', icon: '☕', color: 'bg-amber-900', sound: () => ASMR.pour() },
+            milk: { name: '우유', icon: '🥛', color: 'bg-amber-50', sound: () => ASMR.steam() },
+            choco: { name: '초코', icon: '🍫', color: 'bg-amber-950', sound: () => ASMR.tap() },
+            cream: { name: '휘핑', icon: '☁️', color: 'bg-white', sound: () => ASMR.steam() },
+            berry: { name: '딸기', icon: '🍓', color: 'bg-rose-500', sound: () => ASMR.pop() },
+            carrot: { name: '당근', icon: '🥕', color: 'bg-orange-500', sound: () => ASMR.tap() },
+            bread: { name: '빵', icon: '🍞', color: 'bg-amber-200', sound: () => ASMR.tap() },
+            bake: { name: '굽기', icon: '🔥', color: 'bg-red-500', sound: () => ASMR.steam() }
+        };
+
+        const RECIPES = [
+            { id: 'americano', name: '아이스 아메리카노', items: ['espresso', 'espresso', 'espresso', 'ice', 'ice'], visualIcon: '🥤', desc: '시원한 얼음과 샷의 조화' },
+            { id: 'choco_latte', name: '초코 라떼', items: ['milk', 'milk', 'choco', 'choco', 'cream'], visualIcon: '🧋', desc: '달콤 부드러운 초코 라떼' },
+            { id: 'espresso_drink', name: '에스프레소', items: ['espresso', 'espresso', 'milk', 'milk', 'cream'], visualIcon: '☕', desc: '깊고 진한 에스프레소 음료' },
+            { id: 'strawberry_latte', name: '딸기 라떼', items: ['milk', 'milk', 'berry', 'berry', 'cream'], visualIcon: '🍓', desc: '상큼달콤 딸기 라떼' },
+            { id: 'roasted_carrot', name: '구운 당근', items: ['carrot', 'carrot', 'carrot', 'bake', 'bake'], visualIcon: '🥕🔥', desc: '노릇노릇 구운 당근 디저트' },
+            { id: 'choco_cake', name: '초코 케이크', items: ['choco', 'choco', 'bread', 'bread', 'choco'], visualIcon: '🍰', desc: '달콤한 초코 케이크' },
+            { id: 'strawberry_cake', name: '딸기 케이크', items: ['berry', 'berry', 'bread', 'bread', 'cream'], visualIcon: '🎂', desc: '상큼한 딸기 케이크' }
+        ];
+
+        const NORMAL_CUSTOMERS = [
+            { id: 'student', avatar: '👦', name: '학생 손님', speech: '시험 때문에 피곤해요!' },
+            { id: 'worker', avatar: '👩', name: '직장인 손님', speech: '당 충전이 필요해요!' },
+            { id: 'granny', avatar: '👵', name: '동네 할머니', speech: '향긋한 음료 한 잔 주겠니?' },
+            { id: 'child', avatar: '👧', name: '어린이 손님', speech: '맛있는 것 많이 먹고 싶어요!' },
+            { id: 'rabbit', avatar: '🐰', name: '토끼 손님', speech: '간식 시간이 기다려져요~' },
+            { id: 'artist', avatar: '🧑‍🎨', name: '예술가 손님', speech: '영감을 주는 무언가가 필요해.' },
+            { id: 'musician', avatar: '🎸', name: '버스킹 뮤지션', speech: '목을 축일 시원한 게 최고지.' },
+            { id: 'rude_hurry', avatar: '😤', name: '재촉하는 진상 손님', speech: '아 빨리 안 주고 뭐해요? 늦게 나오면 안 먹어요!' },
+            { id: 'rude_phone', avatar: '📱', name: '통화하는 진상 손님', speech: '아 네네... (어이, 음료 빨리 가져와!)' },
+            { id: 'rude_picky', avatar: '😠', name: '까칠한 진상 손님', speech: '레시피 틀리면 바로 컴플레인 걸 겁니다. 똑바로 해요.' }
+        ];
+
+        const MYSTICAL_CUSTOMERS = [
+            { id: 'wizard', avatar: '🧙‍♂️', name: '별빛 마법사', speech: '마법의 기운이 느껴지는군요.' },
+            { id: 'tarot', avatar: '🔮', name: '운명의 타로술사', speech: '별들의 점괘가 이곳을 가리켰소.' },
+            { id: 'time_traveler', avatar: '🕰️', name: '시간 여행자', speech: '시공간을 넘어 지쳤소이다.' },
+            { id: 'fairy', avatar: '🧚‍♀️', name: '달빛 요정', speech: '은은한 달빛 아래 달콤함을 원해요.' }
+        ];
+
+        function getTargetCustomers(day) {
+            switch(day) {
+                case 1: return Math.floor(Math.random() * 2) + 2; // 2~3
+                case 2: return Math.floor(Math.random() * 3) + 3; // 3~5
+                case 3: return Math.floor(Math.random() * 3) + 4; // 4~6
+                case 4: return Math.floor(Math.random() * 3) + 6; // 6~8
+                case 5: return Math.floor(Math.random() * 3) + 8; // 8~10
+                case 6: return Math.floor(Math.random() * 3) + 10; // 10~12
+                case 7: return 15;
+                default: return 5;
+            }
+        }
+
+        function getTargetRudeCustomers(day) {
+            if (day < 3) return 0;
+            switch(day) {
+                case 3: return Math.floor(Math.random() * 2) + 1; // 1~2
+                case 4: return Math.floor(Math.random() * 2) + 2; // 2~3
+                case 5: return Math.floor(Math.random() * 2) + 3; // 3~4
+                case 6: return Math.floor(Math.random() * 2) + 4; // 4~5
+                case 7: return Math.floor(Math.random() * 4) + 5; // 5~8
+                default: return 0;
+            }
+        }
+
+        function getTargetMysticalCustomers(day) {
+            if (day < 2) return 0;
+            switch(day) {
+                case 2: return 1;
+                case 3: return Math.floor(Math.random() * 2) + 1; // 1~2
+                case 4: return Math.floor(Math.random() * 2) + 2; // 2~3
+                case 5: return Math.floor(Math.random() * 2) + 3; // 3~4
+                case 6: return Math.floor(Math.random() * 2) + 4; // 4~5
+                case 7: return 7;
+                default: return 0;
+            }
+        }
+
+        function addIngredient(key) {
+            initAudio();
+            if (state.currentCup.length >= 5) {
+                showToast("최대 5개의 재료가 찼습니다!");
+                if (state.soundEnabled) ASMR.tap();
+                return;
+            }
+
+            const item = INGREDIENTS[key];
+            item.sound();
+            state.currentCup.push(key);
+
+            updateCupVisual();
+        }
+
+        function updateCupVisual() {
+            const cupContainer = document.getElementById('drink-cup');
+            const stackContainer = document.getElementById('ingredient-stack');
+            const countEl = document.getElementById('ingredient-count');
+            const drinkNameEl = document.getElementById('drink-name');
+
+            countEl.innerText = state.currentCup.length;
+
+            stackContainer.innerHTML = state.currentCup.map(k => {
+                const ing = INGREDIENTS[k];
+                return `<span class="bg-amber-100 text-amber-900 text-[10px] px-1.5 py-0.5 rounded font-bold">${ing.icon}</span>`;
+            }).join('');
+
+            const matchedRecipe = RECIPES.find(r => 
+                r.items.length === state.currentCup.length && 
+                r.items.every((val, idx) => val === state.currentCup[idx])
+            );
+
+            cupContainer.innerHTML = '';
+            if (matchedRecipe) {
+                let suffix = state.powderSprinkled ? ' ✨' : '';
+                drinkNameEl.innerText = `완성: ${matchedRecipe.name}${suffix}`;
+                drinkNameEl.className = "text-xs font-bold text-emerald-600 animate-pulse";
+                cupContainer.innerHTML = `<span class="text-5xl animate-bounce-slow">${matchedRecipe.visualIcon}</span>`;
+                if (state.powderSprinkled) {
+                    cupContainer.innerHTML += `<div class="absolute inset-0 bg-purple-500/20 flex items-center justify-center text-xs">✨</div>`;
+                }
+                cupContainer.className = "w-18 h-22 bg-amber-50 border-2 border-amber-400 rounded-2xl relative overflow-hidden flex items-center justify-center shadow-lg";
+            } else {
+                drinkNameEl.innerText = state.currentCup.length > 0 ? "제조 중..." : "빈 컵/접시";
+                drinkNameEl.className = "text-xs font-bold text-amber-900";
+                cupContainer.className = "w-18 h-22 bg-stone-100/90 border-2 border-stone-300 rounded-b-2xl rounded-t-md relative overflow-hidden flex flex-col-reverse p-1 transition-all shadow-inner items-center justify-center text-3xl";
+                
+                state.currentCup.forEach((k) => {
+                    const ing = INGREDIENTS[k];
+                    const layerEl = document.createElement('div');
+                    layerEl.className = `w-full h-1/5 ${ing.color} border-t border-white/40 flex items-center justify-center text-xs`;
+                    layerEl.innerHTML = `<span>${ing.icon}</span>`;
+                    cupContainer.appendChild(layerEl);
+                });
+            }
+        }
+
+        function resetCup() {
+            initAudio();
+            if (state.soundEnabled) ASMR.tap();
+            state.currentCup = [];
+            state.powderSprinkled = false;
+            updateCupVisual();
+        }
+
+        function sprinkleMagicPowder() {
+            initAudio();
+            ASMR.magic();
+            state.powderSprinkled = true;
+            showToast("✨ 반짝이는 신비가루를 뿌렸습니다!");
+            updateCupVisual();
+        }
+
+        function startGame() {
+            initAudio();
+            if (state.soundEnabled) ASMR.chime();
+            
+            state.day = 1;
+            state.popularity = 20;
+            state.rating = 4.0;
+            state.customersToday = 0;
+            state.targetCustomersToday = getTargetCustomers(state.day);
+            state.rudeCustomersToday = 0;
+            state.targetRudeCustomersToday = getTargetRudeCustomers(state.day);
+            state.mysticalCustomersToday = 0;
+            state.targetMysticalCustomersToday = getTargetMysticalCustomers(state.day);
+            state.totalMysticalSpawned = 0;
+            state.servedTotal = 0;
+            state.magicPowderCount = 0;
+            state.powderSprinkled = false;
+            state.mysticalServedCount = 0;
+            state.rudeFailCount = 0;
+
+            document.getElementById('screen-start').classList.add('hidden');
+            document.getElementById('screen-main').classList.remove('hidden');
+            document.getElementById('screen-main').classList.add('flex');
+
+            updateUI();
+            nextCustomer();
+        }
+
+        function nextCustomer() {
+            if (state.timerInterval) clearInterval(state.timerInterval);
+
+            if (state.customersToday >= state.targetCustomersToday) {
+                if (state.day >= state.maxDays) {
+                    endGame();
+                    return;
+                } else {
+                    state.day++;
+                    state.customersToday = 0;
+                    state.targetCustomersToday = getTargetCustomers(state.day);
+                    state.rudeCustomersToday = 0;
+                    state.targetRudeCustomersToday = getTargetRudeCustomers(state.day);
+                    state.mysticalCustomersToday = 0;
+                    state.targetMysticalCustomersToday = getTargetMysticalCustomers(state.day);
+                    showToast(`☀️ ${state.day}일 차 영업 시작!`);
+                }
+            }
+
+            state.customersToday++;
+            resetCup();
+
+            let chosenCustomer = null;
+            const normalList = NORMAL_CUSTOMERS.filter(c => !c.id.startsWith('rude'));
+            const rudeList = NORMAL_CUSTOMERS.filter(c => c.id.startsWith('rude'));
+            const mysticalList = MYSTICAL_CUSTOMERS;
+            
+            let totalRemaining = (state.targetCustomersToday - state.customersToday) + 1;
+            let rudeRemaining = state.targetRudeCustomersToday - state.rudeCustomersToday;
+            let mysticalRemaining = state.targetMysticalCustomersToday - state.mysticalCustomersToday;
+            
+            // 만약 할당량이 겹쳐서 남은 전체 고객수보다 많아지는 예외 상황 방지
+            if (rudeRemaining + mysticalRemaining > totalRemaining) {
+                if (mysticalRemaining > totalRemaining) mysticalRemaining = totalRemaining;
+                if (rudeRemaining > totalRemaining - mysticalRemaining) rudeRemaining = totalRemaining - mysticalRemaining;
+            }
+
+            let probMystical = mysticalRemaining / totalRemaining;
+            let probRude = rudeRemaining / totalRemaining;
+            let rand = Math.random();
+
+            if (rand < probMystical) {
+                chosenCustomer = mysticalList[Math.floor(Math.random() * mysticalList.length)];
+                chosenCustomer.isMystical = true;
+                state.mysticalCustomersToday++;
+                state.totalMysticalSpawned++;
+            } else if (rand < probMystical + probRude) {
+                chosenCustomer = rudeList[Math.floor(Math.random() * rudeList.length)];
+                chosenCustomer.isMystical = false;
+                state.rudeCustomersToday++;
+            } else {
+                chosenCustomer = normalList[Math.floor(Math.random() * normalList.length)];
+                chosenCustomer.isMystical = false;
+            }
+
+            // Customer orders (진상 손님은 1~5개, 일반/신비는 1~3개)
+            let orderCount = Math.floor(Math.random() * 3) + 1;
+            if (chosenCustomer.id.startsWith('rude')) {
+                orderCount = Math.floor(Math.random() * 5) + 1;
+            }
+            let assignedRecipes = [];
+            
+            // 어린이와 학생은 커피(에스프레소, 아메리카노) 메뉴 제외
+            let availableRecipes = RECIPES;
+            if (chosenCustomer.id === 'child' || chosenCustomer.id === 'student') {
+                availableRecipes = RECIPES.filter(r => r.id !== 'espresso_drink' && r.id !== 'americano');
+            }
+
+            for (let i = 0; i < orderCount; i++) {
+                const randomRecipe = availableRecipes[Math.floor(Math.random() * availableRecipes.length)];
+                assignedRecipes.push({ ...randomRecipe, completed: false });
+            }
+
+            state.currentCustomer = {
+                ...chosenCustomer,
+                recipes: assignedRecipes
+            };
+
+            const avatarEl = document.getElementById('customer-avatar');
+            avatarEl.innerText = state.currentCustomer.avatar;
+            
+            if (state.currentCustomer.isMystical) {
+                document.getElementById('customer-name').className = "font-bold text-xs text-purple-900 bg-purple-200 px-2.5 py-0.5 rounded-full border border-purple-300 animate-pulse";
+                document.getElementById('customer-name').innerText = `✨ ${state.currentCustomer.name} (신비로운 손님)`;
+            } else if (state.currentCustomer.id.startsWith('rude')) {
+                document.getElementById('customer-name').className = "font-bold text-xs text-rose-900 bg-rose-200 px-2 py-0.5 rounded-full border border-rose-300";
+                document.getElementById('customer-name').innerText = `⚠️ ${state.currentCustomer.name}`;
+            } else {
+                document.getElementById('customer-name').className = "font-bold text-xs text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full";
+                document.getElementById('customer-name').innerText = state.currentCustomer.name;
+            }
+
+            document.getElementById('customer-speech').innerHTML = `"${state.currentCustomer.speech} 주문한 메뉴들을 만들어주세요!"`;
+            
+            updateOrderListUI();
+            updateUI();
+
+            // Start timer for this customer
+            if (state.currentCustomer.id.startsWith('rude')) {
+                if (Math.random() < 0.5) {
+                    // 50% 확률로 10~20초만 기다림
+                    state.maxTime = Math.floor(Math.random() * 11) + 10; 
+                } else {
+                    // 기본적으로 30~40초 대기
+                    state.maxTime = Math.floor(Math.random() * 11) + 30; 
+                }
+                state.currentCustomer.willGiveSeverePenalty = Math.random() < 0.2; // 20% 확률로 심각한 패널티
+            } else {
+                state.maxTime = 60;
+            }
+            state.timeLeft = state.maxTime;
+            startCustomerTimer();
+        }
+
+        function updateOrderListUI() {
+            const tagsContainer = document.getElementById('order-recipe-tags');
+            tagsContainer.innerHTML = state.currentCustomer.recipes.map((rec, idx) => {
+                const statusCheck = rec.completed ? '<span class="text-emerald-600 font-bold ml-auto"><i class="fa-solid fa-check"></i> 완료</span>' : '<span class="text-amber-700 ml-auto font-medium">대기 중</span>';
+                return `<div class="bg-amber-50 text-amber-900 border border-amber-200 text-[11px] px-2.5 py-1 rounded-lg font-bold flex items-center gap-1.5">
+                    <span>${idx+1}.</span> <span>${rec.visualIcon}</span> <span>${rec.name}</span> ${statusCheck}
+                </div>`;
+            }).join('');
+        }
+
+        function startCustomerTimer() {
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            const timerBar = document.getElementById('customer-timer-bar');
+
+            state.timerInterval = setInterval(() => {
+                state.timeLeft--;
+                const pct = (state.timeLeft / state.maxTime) * 100;
+                timerBar.style.width = `${pct}%`;
+
+                if (state.timeLeft <= 0) {
+                    clearInterval(state.timerInterval);
+                    handleTimeOut();
+                }
+            }, 1000);
+        }
+
+        function handleTimeOut() {
+            if (state.soundEnabled) ASMR.tap();
+            
+            if (state.currentCustomer.id.startsWith('rude')) {
+                state.rudeFailCount++;
+                if (state.currentCustomer.willGiveSeverePenalty) {
+                    // 진상 손님 20% 확률 극악 패널티
+                    if (Math.random() < 0.5) {
+                        state.rating = Math.max(1.0, +(state.rating - 2.0).toFixed(1));
+                        showToast("😡 진상 손님이 참지 못하고 가버렸습니다! 평점 2점 하락!");
+                    } else {
+                        const dropAmount = Math.floor(state.popularity / 2);
+                        state.popularity -= dropAmount;
+                        showToast(`😡 진상 손님이 참지 못하고 가버렸습니다! 인기도 반토막 (-${dropAmount})!`);
+                    }
+                } else {
+                    // 일반 패널티
+                    state.popularity = Math.max(0, state.popularity - 15);
+                    state.rating = Math.max(1.0, +(state.rating - 0.4).toFixed(1));
+                    showToast("⏰ 시간 초과! 진상 손님이 화가 나서 돌아갔습니다 (-15)...");
+                }
+            } else if (state.currentCustomer.isMystical) {
+                state.popularity = Math.max(0, state.popularity - 10);
+                state.rating = Math.max(1.0, +(state.rating - 0.4).toFixed(1));
+                showToast("⏰ 시간 초과! 신비로운 손님이 실망하고 돌아갔습니다 (-10)...");
+            } else {
+                // 일반 패널티
+                state.popularity = Math.max(0, state.popularity - 5);
+                state.rating = Math.max(1.0, +(state.rating - 0.4).toFixed(1));
+                showToast("⏰ 시간 초과! 손님이 화가 나서 돌아갔습니다 (-5)...");
+            }
+            
+            updateUI();
+
+            if (state.rudeFailCount >= 5) {
+                endGameDueToRude();
+                return;
+            }
+
+            if (state.popularity <= 0) {
+                endGameDueToSad();
+                return;
+            }
+
+            setTimeout(() => {
+                nextCustomer();
+            }, 1500);
+        }
+
+        function serveOrder() {
+            initAudio();
+            if (state.currentCup.length === 0) {
+                showToast("메뉴를 먼저 만들어주세요!");
+                return;
+            }
+
+            const customer = state.currentCustomer;
+
+            // Check if mystical customer requires powder on this order
+            if (customer.isMystical && !state.powderSprinkled) {
+                if (state.soundEnabled) ASMR.tap();
+                state.popularity = Math.max(0, state.popularity - 10);
+                state.rating = Math.max(1.0, +(state.rating - 0.3).toFixed(1));
+                showToast("😡 신비로운 손님에게 신비가루를 뿌리지 않았습니다! 인기도 하락 (-10)!");
+                updateUI();
+                if (state.popularity <= 0) {
+                    endGameDueToSad();
+                    return;
+                }
+                setTimeout(() => {
+                    nextCustomer();
+                }, 1200);
+                return;
+            }
+            
+            // Find first incomplete matching recipe
+            const matchedRecipeIdx = customer.recipes.findIndex(r => 
+                !r.completed &&
+                r.items.length === state.currentCup.length && 
+                r.items.every((val, index) => val === state.currentCup[index])
+            );
+
+            if (matchedRecipeIdx !== -1) {
+                if (state.soundEnabled) ASMR.chime();
+                customer.recipes[matchedRecipeIdx].completed = true;
+                updateOrderListUI();
+                resetCup();
+
+                // Check if all recipes for this customer are completed
+                const allCompleted = customer.recipes.every(r => r.completed);
+
+                if (allCompleted) {
+                    if (state.timerInterval) clearInterval(state.timerInterval);
+
+                    let popGain = 2; // 일반 손님
+                    if (customer.isMystical) popGain = 20; // 신비로운 손님
+                    else if (customer.id.startsWith('rude')) popGain = 5; // 진상 손님
+
+                    state.popularity = Math.min(100, state.popularity + popGain);
+                    state.rating = Math.min(5.0, +(state.rating + 0.1).toFixed(1));
+
+                    if (customer.isMystical) {
+                        state.magicPowderCount++;
+                        state.mysticalServedCount++;
+                        showToast(`✨ 신비로운 손님 대접 성공!`);
+                    } else {
+                        if (Math.random() < 0.3) {
+                            state.magicPowderCount++;
+                            showToast("✨ 숨겨진 신비가루를 발견했습니다!");
+                        } else {
+                            showToast("✨ 모든 주문을 완벽히 대접했습니다!");
+                        }
+                    }
+
+                    state.servedTotal++;
+                    updateUI();
+
+                    setTimeout(() => {
+                        nextCustomer();
+                    }, 1200);
+                } else {
+                    showToast("👍 메뉴 하나 성공! 나머지 주문도 만들어주세요.");
+                }
+
+            } else {
+                // Incorrect recipe served! Customer gets angry and leaves with popularity penalty
+                if (state.soundEnabled) ASMR.tap();
+                if (state.timerInterval) clearInterval(state.timerInterval);
+
+                let popLoss = 5; // 일반 손님
+                if (customer.isMystical) popLoss = 10; // 신비로운 손님
+                else if (customer.id.startsWith('rude')) popLoss = 15; // 진상 손님
+
+                state.popularity = Math.max(0, state.popularity - popLoss);
+                state.rating = Math.max(1.0, +(state.rating - 0.3).toFixed(1));
+                
+                showToast(`😡 주문과 다른 메뉴입니다! 손님이 화를 내며 나갔습니다 (-${popLoss})...`);
+                updateUI();
+
+                if (customer.id.startsWith('rude')) {
+                    state.rudeFailCount++;
+                    if (state.rudeFailCount >= 5) {
+                        endGameDueToRude();
+                        return;
+                    }
+                }
+
+                if (state.popularity <= 0) {
+                    endGameDueToSad();
+                    return;
+                }
+
+                setTimeout(() => {
+                    nextCustomer();
+                }, 1200);
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('day-badge').innerText = `DAY ${state.day}`;
+            document.getElementById('customer-count').innerText = `${state.customersToday}/${state.targetCustomersToday}`;
+            document.getElementById('popularity-bar').style.width = `${state.popularity}%`;
+            document.getElementById('popularity-text').innerText = state.popularity;
+            document.getElementById('powder-status').innerText = `보유: ${state.magicPowderCount}개`;
+
+            const starsContainer = document.getElementById('rating-stars');
+            starsContainer.innerHTML = '';
+            const fullStars = Math.floor(state.rating);
+            for (let i = 0; i < 5; i++) {
+                if (i < fullStars) {
+                    starsContainer.innerHTML += `<i class="fa-solid fa-star"></i>`;
+                } else {
+                    starsContainer.innerHTML += `<i class="fa-regular fa-star"></i>`;
+                }
+            }
+        }
+
+        const ENDINGS_INFO = {
+            happy: { id: 'happy', name: '해피 엔딩 🎉', desc: '따뜻한 감성 카페가 되었습니다.', icon: '🏆', color: 'bg-emerald-50 border-emerald-200 text-emerald-900' },
+            sad: { id: 'sad', name: '새드 엔딩 💔', desc: '인기도 하락으로 인한 쓸쓸한 폐업...', icon: '🌧️', color: 'bg-rose-50 border-rose-200 text-rose-900' },
+            secret: { id: 'secret', name: '시크릿 엔딩 🌌', desc: '전설의 환상적인 카페가 되었습니다.', icon: '🌌', color: 'bg-purple-50 border-purple-200 text-purple-900' },
+            rude: { id: 'rude', name: '이런@망할(?) 앤딩 🌋', desc: '진상 손님들의 대환장 파티...', icon: '🤬', color: 'bg-red-50 border-red-200 text-red-900' }
+        };
+
+        function getUnlockedEndings() {
+            // 로컬 스토리지 안전장치: 클라우드 연결 전이나 통신 지연 시에도 저장 내역 유지
+            try {
+                const saved = localStorage.getItem('cafe_endings');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    parsed.forEach(e => {
+                        if (!window.unlockedEndings.includes(e)) window.unlockedEndings.push(e);
+                    });
+                }
+            } catch(e) {}
+            return window.unlockedEndings || [];
+        }
+
+        function unlockEnding(endingId) {
+            if (!window.unlockedEndings) window.unlockedEndings = [];
+            if (!window.unlockedEndings.includes(endingId)) {
+                window.unlockedEndings.push(endingId);
+            }
+            
+            // 1. 브라우저 로컬 스토리지에 즉시 저장
+            try {
+                localStorage.setItem('cafe_endings', JSON.stringify(window.unlockedEndings));
+            } catch(e) {}
+
+            // 2. 파이어베이스 클라우드에 백업 저장
+            if (window.saveEndingToCloud) {
+                window.saveEndingToCloud();
+            }
+        }
+
+        function toggleEndingsModal(show) {
+            initAudio();
+            if (state.soundEnabled) ASMR.tap();
+            const modal = document.getElementById('modal-endings');
+            if (show) {
+                const unlocked = getUnlockedEndings();
+                const container = document.getElementById('endings-list');
+                container.innerHTML = Object.values(ENDINGS_INFO).map(ending => {
+                    if (unlocked.includes(ending.id)) {
+                        return `
+                        <div class="p-3 ${ending.color} rounded-xl border flex items-center gap-3 shadow-sm transition-all hover:scale-[1.02]">
+                            <div class="text-2xl">${ending.icon}</div>
+                            <div>
+                                <div class="font-bold text-xs">${ending.name}</div>
+                                <div class="text-[10px] opacity-80 mt-0.5">${ending.desc}</div>
+                            </div>
+                        </div>`;
+                    } else {
+                        return `
+                        <div class="p-3 bg-stone-100 border-stone-200 text-stone-400 rounded-xl border flex items-center gap-3 shadow-sm">
+                            <div class="text-2xl opacity-50 grayscale">❓</div>
+                            <div>
+                                <div class="font-bold text-xs">???</div>
+                                <div class="text-[10px] opacity-80 mt-0.5">아직 해금되지 않았습니다.</div>
+                            </div>
+                        </div>`;
+                    }
+                }).join('');
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function endGameDueToSad() {
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            
+            unlockEnding('sad');
+
+            document.getElementById('screen-main').classList.add('hidden');
+            document.getElementById('screen-main').classList.remove('flex');
+            
+            const resultScreen = document.getElementById('screen-result');
+            resultScreen.classList.remove('hidden');
+            resultScreen.classList.add('flex');
+
+            document.getElementById('ending-badge').innerText = "새드 엔딩 💔";
+            document.getElementById('ending-badge').className = "px-3 py-1 bg-rose-100 text-rose-800 text-xs font-bold rounded-full";
+            document.getElementById('ending-title').innerText = "쓸쓸한 폐업...";
+            document.getElementById('ending-title').className = "font-gaegu text-4xl font-bold text-stone-700 mt-2";
+            document.getElementById('ending-illustration').innerText = "🌧️";
+            document.getElementById('ending-illustration').className = "w-40 h-40 rounded-3xl bg-stone-200 border-4 border-stone-300 flex items-center justify-center text-7xl shadow-lg my-2";
+            
+            document.getElementById('final-rating').innerText = `★ ${state.rating.toFixed(1)}`;
+            document.getElementById('final-popularity').innerText = `${state.popularity}%`;
+            document.getElementById('final-served').innerText = `${state.servedTotal}명`;
+            document.getElementById('ending-story').innerText = "인기도가 모두 소진되어 아쉽지만 카페 문을 닫게 되었습니다... 다음에는 주문 실수를 줄이고 시간 내에 대접해보세요!";
+        }
+
+        function endGameDueToRude() {
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            
+            unlockEnding('rude');
+
+            document.getElementById('screen-main').classList.add('hidden');
+            document.getElementById('screen-main').classList.remove('flex');
+            
+            const resultScreen = document.getElementById('screen-result');
+            resultScreen.classList.remove('hidden');
+            resultScreen.classList.add('flex');
+
+            const titleEl = document.getElementById('ending-title');
+            const badgeEl = document.getElementById('ending-badge');
+            const illuEl = document.getElementById('ending-illustration');
+            const storyEl = document.getElementById('ending-story');
+
+            document.getElementById('final-rating').innerText = `★ ${state.rating.toFixed(1)}`;
+            document.getElementById('final-popularity').innerText = `${state.popularity}%`;
+            document.getElementById('final-served').innerText = `${state.servedTotal}명`;
+            document.getElementById('ending-story').innerText = "진상 손님들의 평정 때문에 아무도 카페에 안 오게 됐습니다...";
+        }
+
+        function endGame() {
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            document.getElementById('screen-main').classList.add('hidden');
+            document.getElementById('screen-main').classList.remove('flex');
+            document.getElementById('final-served').innerText = `${state.servedTotal}명`;
+
+            if (state.totalMysticalSpawned > 0 && state.mysticalServedCount >= state.totalMysticalSpawned && state.popularity > 0) {
+                unlockEnding('secret');
+                badgeEl.innerText = "시크릿 엔딩 🌌";
+                badgeEl.className = "px-3 py-1 bg-purple-100 text-purple-800 text-xs font-bold rounded-full";
+                titleEl.innerText = "꿈빛 환상의 카페";
+                titleEl.className = "font-gaegu text-4xl font-bold text-purple-900 mt-2";
+                illuEl.innerText = "🌌";
+                illuEl.className = "w-40 h-40 rounded-3xl bg-purple-100 border-4 border-purple-300 flex items-center justify-center text-7xl shadow-lg my-2";
+                storyEl.innerText = `축하합니다! 방문한 모든 신비로운 손님들(${state.mysticalServedCount}명)을 완벽히 대접하여 '시크릿 엔딩'이 해금되었습니다! 당신의 카페는 전설적인 힐링 명소가 되었습니다.`;
+            } else if (state.popularity >= 50 && state.rating >= 3.5) {
+                unlockEnding('happy');
+                badgeEl.innerText = "해피 엔딩 🎉";
+                badgeEl.className = "px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full";
+                titleEl.innerText = "따뜻한 감성 카페";
+                titleEl.className = "font-gaegu text-4xl font-bold text-amber-900 mt-2";
+                illuEl.innerText = "🏆";
+                illuEl.className = "w-40 h-40 rounded-3xl bg-amber-100 border-4 border-amber-300 flex items-center justify-center text-7xl shadow-lg my-2";
+                storyEl.innerText = "정확한 5가지 재료 레시피와 ASMR 사운드로 손님들에게 큰 위로와 힐링을 선물했습니다. 단골 손님이 가득한 행복한 카페가 되었습니다!";
+            } else {
+                unlockEnding('sad');
+                badgeEl.innerText = "새드 엔딩 💔";
+                badgeEl.className = "px-3 py-1 bg-rose-100 text-rose-800 text-xs font-bold rounded-full";
+                titleEl.innerText = "쓸쓸한 폐업...";
+                titleEl.className = "font-gaegu text-4xl font-bold text-stone-700 mt-2";
+                illuEl.innerText = "🌧️";
+                illuEl.className = "w-40 h-40 rounded-3xl bg-stone-200 border-4 border-stone-300 flex items-center justify-center text-7xl shadow-lg my-2";
+                storyEl.innerText = "주문 실수가 잦거나 평점과 인기도가 떨어져 아쉽지만 카페 문을 닫게 되었습니다.";
+            }
+        }
+
+        function restartGame() {
+            document.getElementById('screen-result').classList.add('hidden');
+            document.getElementById('screen-result').classList.remove('flex');
+            document.getElementById('screen-start').classList.remove('hidden');
+        }
+
+        function toggleModal(modalId, show) {
+            initAudio();
+            if (state.soundEnabled) ASMR.tap();
+            const modal = document.getElementById(modalId);
+            if (show) {
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function toggleSoundEffect() {
+            state.soundEnabled = !state.soundEnabled;
+            const icon = document.getElementById('sound-icon');
+            if (state.soundEnabled) {
+                icon.className = "fa-solid fa-volume-high text-[10px]";
+                showToast("소리 켜짐");
+            } else {
+                icon.className = "fa-solid fa-volume-xmark text-[10px]";
+                showToast("소리 꺼짐");
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
